@@ -17,6 +17,10 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
   const [initialSize, setInitialSize] = useState({ width: 0, height: 0 });
   const [cursorStyle, setCursorStyle] = useState('default');
   
+  // New state for dragging assets when paused
+  const [draggingAsset, setDraggingAsset] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
   // Reference to assets for use in callbacks
   const assetsRef = useRef(assets);
   
@@ -69,7 +73,7 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
     
     const ctx = canvas.getContext('2d');
     
-    //Redraw
+    // Redraw
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#e0e0e0';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -80,7 +84,7 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
       if (img) {
         ctx.drawImage(img, asset.x, asset.y, asset.width, asset.height);
         
-        //ALWAYS highlight selected asset regardless of play state
+        // Always highlight selected asset regardless of play state
         if (asset.canvasId === selectedAssetId) {
           ctx.strokeStyle = '#64ffda';
           ctx.lineWidth = 3;
@@ -209,7 +213,7 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
     );
   };
   
-  // Handle mouse move for cursor updates and resize preview
+  // Handle mouse move for cursor updates, drag updates, and resize preview
   const handleMouseMove = (e) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -218,6 +222,15 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    // If currently dragging an asset when paused, update its position
+    if (draggingAsset) {
+      draggingAsset.x = x - dragOffset.x;
+      draggingAsset.y = y - dragOffset.y;
+      forceRedrawAssets();
+      return;
+    }
+    
+    // Handle resizing preview
     if (isResizing && resizeAsset) {
       const newWidth = Math.max(32, initialSize.width + (x - resizeStartPos.x));
       const newHeight = Math.max(32, initialSize.height + (y - resizeStartPos.y));
@@ -252,17 +265,10 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
             );
           } else {
             ctx.drawImage(img, asset.x, asset.y, asset.width, asset.height);
-            
             if (asset.canvasId === selectedAssetId && asset.canvasId !== resizeAsset.canvasId) {
               ctx.strokeStyle = '#64ffda';
               ctx.lineWidth = 3;
-              ctx.strokeRect(
-                asset.x - 4, 
-                asset.y - 4, 
-                asset.width + 8, 
-                asset.height + 8
-              );
-              
+              ctx.strokeRect(asset.x - 4, asset.y - 4, asset.width + 8, asset.height + 8);
               const handleSize = 10;
               ctx.fillStyle = '#64ffda';
               ctx.fillRect(
@@ -279,7 +285,7 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
       return;
     }
     
-    // Check if mouse is over a resize handle of the selected asset
+    // Update cursor style based on whether mouse is over a resize handle of the selected asset
     const selectedAsset = assets.find(asset => asset.canvasId === selectedAssetId);
     if (selectedAsset && isOverResizeHandle(x, y, selectedAsset)) {
       setCursorStyle('nwse-resize');
@@ -288,7 +294,7 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
     }
   };
   
-  // Handle mouse down for selection and resize start
+  // Handle mouse down for selection, dragging (when paused), and resize start
   const handleMouseDown = (e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -303,19 +309,28 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
       setResizeAsset(selectedAsset);
       setInitialSize({ width: selectedAsset.width, height: selectedAsset.height });
       setCursorStyle('nwse-resize');
-      return; 
+      return;
     }
     
-    // Check if click is on an asset (from top to bottom)
+    // If paused, check if user is trying to drag an asset
+    if (!isPlaying) {
+      for (let i = assets.length - 1; i >= 0; i--) {
+        const asset = assets[i];
+        if (asset.containsPoint(x, y)) {
+          onAssetSelected(asset.canvasId);
+          setDraggingAsset(asset);
+          setDragOffset({ x: x - asset.x, y: y - asset.y });
+          return;
+        }
+      }
+    }
+    
+    // In play mode or if no dragging, check for asset selection
     for (let i = assets.length - 1; i >= 0; i--) {
       const asset = assets[i];
-      
       if (asset.containsPoint(x, y)) {
         onAssetSelected(asset.canvasId);
-        
-        // Force an immediate redraw to show selection
         setTimeout(forceRedrawAssets, 0);
-        
         return;
       }
     }
@@ -323,7 +338,7 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
     onAssetSelected(null);
   };
   
-  // Handle mouse up to complete resize operation
+  // Handle mouse up to complete resizing or dragging operations
   const handleMouseUp = (e) => {
     if (isResizing && resizeAsset) {
       const canvas = canvasRef.current;
@@ -343,14 +358,22 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
       }
     }
     
-    // Reset resize state and draw
+    // If dragging an asset, end the drag
+    if (draggingAsset) {
+      setDraggingAsset(null);
+      setDragOffset({ x: 0, y: 0 });
+      forceRedrawAssets();
+      return;
+    }
+    
+    // Reset resize state and update canvas
     setIsResizing(false);
     setResizeAsset(null);
     setCursorStyle('default');
     forceRedrawAssets();
   };
   
-  // Handle canvas exit to cancel resize
+  // Handle canvas exit to cancel any ongoing operations
   const handleMouseOut = () => {
     if (isResizing) {
       setIsResizing(false);

@@ -14,10 +14,22 @@
   margin-bottom: 1rem;
 }
 
-.editor-header h1 {
-  color: #64ffda;
-  margin: 0;
+.project-name-input {
+  background-color: #112240;
+  color: #ccd6f6;
+  border: 1px solid #233554;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-right: auto;
 }
+
+.project-name-input:focus {
+  outline: none;
+  border-color: #64ffda;
+}
+
 
 .back-button {
   background-color: #5a8a87;
@@ -37,13 +49,14 @@
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 1rem;
-  height: calc(100vh - 100px);
+  height: calc(100vh - 80px);
 }
 
 .left-panel {
   height: 100%;
   background-color: #112240;
   border-radius: 8px;
+  overflow: hidden;
 }
 
 .canvas-container {
@@ -60,11 +73,6 @@
 canvas {
   background-color: #e0e0e0;
   display: block;
-  margin: 0 auto;
-  cursor: pointer;
-}
-
-canvas.playing {
   cursor: default;
 }
 
@@ -76,11 +84,11 @@ canvas.drag-over {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background-color: rgba(211, 211, 255, 0.8);
+  background-color: rgba(90, 138, 135, 0.8);
   color: #0a192f;
   font-size: 1.5rem;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -91,12 +99,10 @@ canvas.drag-over {
 }
 
 .play-button:hover {
-  background-color: rgba(211, 211, 255, 1);
+  background-color: rgba(100, 255, 218, 1);
 }
 
 .asset-panel {
-  background-color: #112240;
-  border-radius: 8px;
   padding: 1rem;
   height: 100%;
   display: flex;
@@ -106,31 +112,49 @@ canvas.drag-over {
 
 .asset-panel h2 {
   color: #64ffda;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   margin-top: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   text-align: center;
 }
+
+.asset-search input {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #233554;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #64ffda;
+  margin-bottom: 1rem;
+}
+
+.asset-search input:focus {
+  border-color: #64ffda;
+  outline: none;
+}
+
 
 .asset-list {
   flex-grow: 1;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  align-items: start;
+  grid-auto-rows: min-content;
 }
 
 .asset-item {
   background-color: #233554;
-  padding: 1rem;
+  padding: 0.75rem;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: grab;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
 }
 
 .asset-item:hover {
@@ -143,6 +167,8 @@ canvas.drag-over {
 }
 
 .asset-item img {
+  width: 32px;
+  height: 32px;
   margin-bottom: 0.5rem;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
@@ -151,22 +177,21 @@ canvas.drag-over {
 
 .asset-item span {
   color: #64ffda;
-  text-align: center;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  word-break: break-word;
 }
 
 .import-button {
   background-color: #5a8a87;
   color: #0a192f;
   border: none;
-  border-radius: 20px;
-  padding: 0.75rem;
-  font-size: 1rem;
+  border-radius: 4px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
   font-weight: bold;
   cursor: pointer;
-  margin-top: auto;
-  width: 80%;
-  align-self: center;
+  margin-top: 1rem;
+  width: 100%;
   text-align: center;
 }
 
@@ -175,8 +200,6 @@ canvas.drag-over {
 }
 
 .action-panel {
-  background-color: #112240;
-  border-radius: 8px;
   padding: 1rem;
   height: 100%;
   display: flex;
@@ -186,66 +209,65 @@ canvas.drag-over {
 
 .action-panel h2 {
   color: #64ffda;
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   margin-top: 0;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.action-trigger-button {
-  background-color: #233554;
-  color: #64ffda;
-  border: 2px solid transparent;
-  border-radius: 20px;
-  padding: 1rem;
   margin-bottom: 1rem;
-  font-size: 1.1rem;
   text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.action-trigger-button:hover {
-  border-color: #64ffda;
-  background-color: rgba(100, 255, 218, 0.1);
-}
-
-.action-behavior-button {
+.action-trigger-button, .action-behavior-button {
   background-color: #233554;
   color: #64ffda;
-  border: 2px solid transparent;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
   padding: 0.75rem;
   margin-bottom: 0.75rem;
   font-size: 1rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
 }
 
-.action-behavior-button:hover {
+.action-trigger-button:hover, .action-behavior-button:hover {
   border-color: #64ffda;
   background-color: rgba(100, 255, 218, 0.1);
 }
 
 .selected-asset-actions {
-  margin-top: auto;
   background-color: #233554;
-  border: 2px solid #64ffda;
+  border: 1px solid #233554;
   border-radius: 8px;
   padding: 1rem;
   margin-top: 1.5rem;
 }
 
+.selected-asset-actions h3 {
+  color: #a8b2d1;
+  font-size: 0.9rem;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  font-weight: normal;
+  border-bottom: 1px solid #112240;
+  padding-bottom: 0.3rem;
+}
+
+
 .selected-asset-preview {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #0a192f;
+  border-radius: 4px;
 }
 
 .selected-asset-preview img {
-  margin-bottom: 0.5rem;
+  width: 32px;
+  height: 32px;
   image-rendering: pixelated;
 }
 
@@ -253,15 +275,16 @@ canvas.drag-over {
   background-color: #5a8a87;
   color: #0a192f;
   border-radius: 20px;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
   font-weight: bold;
-  margin-top: 0.5rem;
+  font-size: 0.8rem;
 }
 
 .action-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .action-item {
@@ -269,8 +292,15 @@ canvas.drag-over {
   justify-content: space-between;
   align-items: center;
   background-color: rgba(35, 53, 84, 0.8);
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.action-labels {
+  display: flex;
+  gap: 0.5rem;
+  flex-grow: 1;
 }
 
 .action-trigger-label {
@@ -280,6 +310,7 @@ canvas.drag-over {
   padding: 0.25rem 0.75rem;
   font-size: 0.8rem;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .action-behavior-label {
@@ -288,6 +319,39 @@ canvas.drag-over {
   border-radius: 20px;
   padding: 0.25rem 0.75rem;
   font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.remove-action-button {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+  padding: 0 0.2rem 0 0.5rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.remove-action-button:hover {
+  color: #e03131;
+}
+
+.back-to-actions-button {
+   background-color: #233554;
+   color: #64ffda;
+   border: 1px solid #64ffda;
+   border-radius: 4px;
+   padding: 0.5rem 1rem;
+   margin-top: 1rem;
+   cursor: pointer;
+   width: 100%;
+}
+
+.back-to-actions-button:hover {
+   background-color: rgba(100, 255, 218, 0.1);
 }
 
 .no-selection {
@@ -301,7 +365,7 @@ canvas.drag-over {
 }
 
 .no-selection p {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   line-height: 1.5;
   max-width: 80%;
 }
@@ -315,36 +379,23 @@ canvas.drag-over {
 @media (max-width: 992px) {
   .editor-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto auto 1fr;
     height: auto;
     gap: 1rem;
   }
-  
+
   .left-panel {
-    height: 300px;
+    height: auto;
+    max-height: 40vh;
   }
-  
+
   .canvas-container {
-    height: 50vh;
+    min-height: 400px;
   }
 }
 
 .dragging {
   cursor: grabbing !important;
-}
-
-.canvas.playing {
-  cursor: default;
-}
-
-.resize-handle {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: #64ffda;
-  border: 1px solid #0a192f;
-  cursor: nwse-resize;
-  z-index: 10;
 }
 
 canvas.resizing {
@@ -361,7 +412,6 @@ canvas.hover-resize {
 }
 
 .resize-handle:hover {
-  background-color: #64ffda;
   transform: scale(1.2);
 }
 

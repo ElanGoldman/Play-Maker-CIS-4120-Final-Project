@@ -14,59 +14,58 @@ function EditorPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [activePanel, setActivePanel] = useState('assets'); // 'assets' or 'actions'
-  
-  // TODO:Will need to update for our new tutuorial game
+
+  // TODO: Will need to update for our new tutuorial game
   const [availableAssets] = useState([
-    new Asset({ 
-      id: 1, 
-      type: 'sprite', 
-      name: 'Mario', 
+    new Asset({
+      id: 1,
+      type: 'sprite',
+      name: 'Mario',
       imgSrc: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuXuam9tXIXUUCrh95GbURDwDjnr-PVret7w&s',
       width: 32,
       height: 32
     }),
-    new Asset({ 
-      id: 2, 
-      type: 'sprite', 
-      name: 'Luigi', 
+    new Asset({
+      id: 2,
+      type: 'sprite',
+      name: 'Luigi',
       imgSrc: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQf3j6_Bl1Bj0NxhykavlZOQBcTmXhzN0D-KQ&s',
       width: 32,
       height: 32
     }),
-    new Asset({ 
-      id: 3, 
-      type: 'object', 
-      name: 'Pipe', 
+    new Asset({
+      id: 3,
+      type: 'object',
+      name: 'Pipe',
       imgSrc: 'https://upload.wikimedia.org/wikipedia/commons/9/93/Mario_pipe.png',
       width: 32,
       height: 32
     })
   ]);
-  
-  // Load project data
+
   useEffect(() => {
     setProjectName(`Project ${projectId}`);
-    
-    // Load saved project if available
+
     const savedProject = localStorage.getItem(`project_${projectId}`);
     if (savedProject) {
       try {
         const parsedProject = JSON.parse(savedProject);
-        
+
         const loadedAssets = parsedProject.canvasAssets.map(assetData => {
           const asset = new Asset(assetData);
-          
+
           if (assetData.actions && Array.isArray(assetData.actions)) {
-            asset.actions = assetData.actions.map(actionData => 
+            asset.actions = assetData.actions.map(actionData =>
               new Action(actionData)
             );
+          } else {
+             asset.actions = []; 
           }
-          
           return asset;
         });
-        
+
         setCanvasAssets(loadedAssets);
-        setProjectName(parsedProject.name);
+        setProjectName(parsedProject.name || `Project ${projectId}`);
       } catch (error) {
         console.error('Error loading project data:', error);
         setCanvasAssets([]);
@@ -74,70 +73,61 @@ function EditorPage() {
     } else {
       setCanvasAssets([]);
     }
-    
-    // Always start with assets panel when loading a project
+
     setActivePanel('assets');
     setSelectedAssetId(null);
   }, [projectId]);
-  
+
   // Update active panel based on selection
   useEffect(() => {
-    console.log('Selected asset changed:', selectedAssetId);
-    
-    // If an asset is selected, show actions panel
     if (selectedAssetId) {
-      console.log('Switching to actions panel');
       setActivePanel('actions');
     } else {
       setActivePanel('assets');
     }
   }, [selectedAssetId]);
-  
-  // Save project data whenever canvas assets change
+
+  // Save project data whenever canvas assets or project name change
   useEffect(() => {
-    const projectData = {
-      id: projectId,
-      name: projectName,
-      lastSaved: new Date().toISOString(),
-      canvasAssets: canvasAssets.map(asset => asset.toJSON())
-    };
-    
-    localStorage.setItem(`project_${projectId}`, JSON.stringify(projectData));
-    console.log('Project saved:', projectData);
-  }, [canvasAssets, projectId, projectName]);
-  
+    if (canvasAssets.length === 0 && localStorage.getItem(`project_${projectId}`)) {
+    } else {
+       const projectData = {
+         id: projectId,
+         name: projectName,
+         lastSaved: new Date().toISOString(),
+         canvasAssets: canvasAssets.map(asset => asset.toJSON())
+       };
+       localStorage.setItem(`project_${projectId}`, JSON.stringify(projectData));
+    }
+  }, [canvasAssets, projectId, projectName]); // Trigger save when these change
+
+  // Helper to get the currently selected asset object
   const getSelectedAsset = () => {
     if (!selectedAssetId) return null;
     return canvasAssets.find(asset => asset.canvasId === selectedAssetId);
   };
-  
+
+  // Handler for when an asset is dropped from the AssetPanel onto the Canvas
   const handleAssetDropped = (newAsset) => {
-    console.log('Asset dropped on canvas:', newAsset);
-    
-    const assetInstance = newAsset instanceof Asset 
-      ? newAsset 
+    const assetInstance = newAsset instanceof Asset
+      ? newAsset
       : new Asset(newAsset);
-    
+
     setCanvasAssets(prevAssets => [...prevAssets, assetInstance]);
-    
   };
-  
+
   // Handle asset selection on canvas
   const handleAssetSelected = (assetId) => {
-    console.log('Asset selected:', assetId);
     setSelectedAssetId(assetId);
   };
-  
+
   // Add action to the selected asset
   const handleAddAction = (action) => {
     if (!selectedAssetId) return;
-    
-    console.log('Adding action to asset:', action);
-    
-    const actionInstance = action instanceof Action 
-      ? action 
+    const actionInstance = action instanceof Action
+      ? action
       : new Action(action);
-    
+
     setCanvasAssets(prevAssets => {
       return prevAssets.map(asset => {
         if (asset.canvasId === selectedAssetId) {
@@ -151,88 +141,108 @@ function EditorPage() {
       });
     });
   };
-  
+
+  const handleRemoveAction = (actionIdToRemove) => {
+    if (!selectedAssetId) return;
+
+    setCanvasAssets(prevAssets => {
+      return prevAssets.map(asset => {
+        if (asset.canvasId === selectedAssetId) {
+           const updatedAsset = asset.removeAction(actionIdToRemove);
+
+           return new Asset({ ...updatedAsset });
+        }
+        return asset;
+      });
+    });
+  };
+
   const handleAssetResized = (assetId, newWidth, newHeight) => {
-    console.log('Resizing asset:', assetId, 'to', newWidth, 'x', newHeight);
-    
-    // Update the asset with new dimensions
     setCanvasAssets(prevAssets => {
       return prevAssets.map(asset => {
         if (asset.canvasId === assetId) {
-          // Create a new asset with updated dimensions
           const updatedAsset = new Asset({
             ...asset,
             width: newWidth,
             height: newHeight
           });
-          
-          // Copies actions over to new copy
-          updatedAsset.actions = [...asset.actions];
-          
+
           return updatedAsset;
         }
         return asset;
       });
     });
   };
-  
+
+  // Toggle play/pause state for the canvas
   const handlePlayToggle = () => {
-    // Save current state before entering play mode
+    // Save current state before entering play mode?
     if (!isPlaying) {
-      // Store a copy of canvas assets for restoration later if needed
+      // Store a copy of canvas assets for restoration later if needed?
       localStorage.setItem(
-        `project_${projectId}_play_backup`, 
+        `project_${projectId}_play_backup`,
         JSON.stringify(canvasAssets.map(asset => asset.toJSON()))
       );
-    } 
-    // If exiting play mode, reset any ongoing animations
+    }
+    // If exiting play mode, reset any ongoing animations?
     else {
       setCanvasAssets(prevAssets => {
-        // Create fresh copies to trigger re-renders
-        return prevAssets.map(asset => new Asset({
+        // Create fresh copies to trigger re-renders and reset animation state
+        return prevAssets.map(asset => new Asset({ // Create new instances
           ...asset,
           actions: asset.actions.map(action => {
-            const newAction = new Action(action);
-            newAction.isRunning = false;
+            const newAction = new Action(action); // Create new action instance
+            newAction.isRunning = false; // Reset isRunning flag
             return newAction;
           })
         }));
       });
     }
-    
+
     setIsPlaying(!isPlaying);
   };
-  
+
   const handleBackToProjects = () => {
     navigate('/projects');
   };
 
+  const handleProjectNameChange = (event) => {
+    setProjectName(event.target.value);
+  };
+
+
   return (
     <div className="editor-page">
       <header className="editor-header">
-        <h1>{projectName}</h1>
+        <input
+           type="text"
+           value={projectName}
+           onChange={handleProjectNameChange}
+           className="project-name-input"
+           aria-label="Project Name"
+        />
         <button className="back-button" onClick={handleBackToProjects}>
           Back to Projects
         </button>
       </header>
-      
+
       <div className="editor-layout">
-        {/* Left panel - conditional render based on state */}
         <div className="left-panel">
           {activePanel === 'assets' ? (
-            <AssetPanel 
+            <AssetPanel
               assets={availableAssets}
               onAddAsset={() => {}}
             />
           ) : (
-            <ActionPanel 
+            <ActionPanel
               selectedAsset={getSelectedAsset()}
               onAddAction={handleAddAction}
+              onRemoveAction={handleRemoveAction}
             />
           )}
         </div>
-        
-        <Canvas 
+
+        <Canvas
           assets={canvasAssets}
           selectedAssetId={selectedAssetId}
           onAssetSelected={handleAssetSelected}
