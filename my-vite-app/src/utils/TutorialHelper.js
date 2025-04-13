@@ -53,7 +53,11 @@ export const saveTutorialState = (projectId, state) => {
       
       const checkForElement = () => {
         attempts++;
-        const element = document.querySelector(selector);
+        let element;
+        if (selector === window) {
+          element = window;
+        }
+        element = document.querySelector(selector);
         
         if (element) {
           resolve(element);

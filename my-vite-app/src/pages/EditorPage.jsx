@@ -117,7 +117,16 @@ function EditorPage() {
       ? newAsset
       : new Asset(newAsset);
 
-    setCanvasAssets(prevAssets => [...prevAssets, assetInstance]);
+      setCanvasAssets(prevAssets => {
+        const updatedAssets = [...prevAssets, assetInstance];
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('playmaker:assetAdded', {
+                detail: { assetId: assetInstance.canvasId }
+            }));
+            console.log('Dispatched playmaker:assetAdded');
+        }, 0);
+        return updatedAssets;
+    });
   };
 
   // Handle asset selection on canvas

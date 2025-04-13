@@ -1,8 +1,5 @@
 import { useState, useEffect, useRef, forwardRef } from 'react';
 
-/**
- * Enhanced TutorialSystem component with interactive transparency toggle
- */
 const TutorialSystem = forwardRef(({ 
   steps, 
   currentStep, 
@@ -13,33 +10,18 @@ const TutorialSystem = forwardRef(({
   const [isVisible, setIsVisible] = useState(true);
   const [highlightStyles, setHighlightStyles] = useState({});
   const [popupStyles, setPopupStyles] = useState({});
-  const [moreTransparent, setMoreTransparent] = useState(false);
   const targetRef = useRef(null);
   const overlayRef = useRef(null);
   const popupRef = useRef(null);
   const highlightRef = useRef(null);
   
-  // Toggle between regular and high transparency modes
-  const toggleTransparency = () => {
-    setMoreTransparent(prevState => !prevState);
-  };
-  
-  // Effect to apply the transparency class based on state change
-  useEffect(() => {
-    if (overlayRef.current) {
-      if (moreTransparent) {
-        overlayRef.current.classList.add('fully-transparent');
-      } else {
-        overlayRef.current.classList.remove('fully-transparent');
-      }
-    }
-  }, [moreTransparent]);
-  
-  // Focus on the highlighted element and calculate positions
   useEffect(() => {
     const step = steps[currentStep];
     if (!step) return;
     
+    setHighlightStyles({});
+    setPopupStyles({});
+
     if (step.selector) {
       const targetElement = document.querySelector(step.selector);
       if (targetElement) {
@@ -58,37 +40,41 @@ const TutorialSystem = forwardRef(({
         
         setHighlightStyles(highlightStyle);
         
-        // Calculate popup position to avoid the highlight
         let popupTop, popupLeft;
         
-        // Position popup based on the step's position preference or calculate optimal position
+        const popupWidth = popupRef.current?.offsetWidth || 380;
+        const popupHeight = popupRef.current?.offsetHeight || 250;
+
         if (step.position) {
           popupTop = step.position.top;
           popupLeft = step.position.left;
         } else {
-          // Calculate best position for popup
           const windowWidth = window.innerWidth;
           const windowHeight = window.innerHeight;
           
           // Try to position to the right of the element
-          if (rect.right + 360 < windowWidth) {
+          if (rect.right + 20 + popupWidth < windowWidth) {
             popupLeft = `${rect.right + 20}px`;
             popupTop = `${rect.top}px`;
           } 
           // Try to position below the element
-          else if (rect.bottom + 250 < windowHeight) {
+          else if (rect.bottom + 20 + popupHeight < windowHeight) {
             popupLeft = `${rect.left}px`;
             popupTop = `${rect.bottom + 20}px`;
           }
           // Try to position to the left of the element
-          else if (rect.left - 360 > 0) {
-            popupLeft = `${rect.left - 360 - 20}px`;
+          else if (rect.left - 20 - popupWidth > 0) {
+            popupLeft = `${rect.left - popupWidth - 20}px`;
             popupTop = `${rect.top}px`;
           }
           // Position above the element
-          else {
+          else if (rect.top - 20 - popupHeight > 0) {
             popupLeft = `${rect.left}px`;
-            popupTop = `${rect.top - 250 - 20}px`;
+            popupTop = `${rect.top - popupHeight - 20}px`;
+          }
+          else {
+             popupLeft = '50%';
+             popupTop = '50%';
           }
         }
         
@@ -96,7 +82,7 @@ const TutorialSystem = forwardRef(({
           position: 'absolute',
           top: popupTop,
           left: popupLeft,
-          transform: step.position ? 'translate(-50%, -50%)' : 'none',
+          transform: (popupLeft === '50%' && popupTop === '50%') || step.position ? 'translate(-50%, -50%)' : 'none',
         });
         
         if (!isElementInViewport(targetElement)) {
@@ -105,9 +91,16 @@ const TutorialSystem = forwardRef(({
             block: 'center' 
           });
         }
+      } else {
+          console.warn(`[Tutorial] Element not found for selector: ${step.selector}`);
+          setPopupStyles({
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          });
       }
     } else {
-      setHighlightStyles({});
       setPopupStyles({
         position: 'absolute',
         top: step.position?.top || '50%',
@@ -118,33 +111,37 @@ const TutorialSystem = forwardRef(({
     
     // Handle keyboard navigation
     const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+         return;
+      }
+      
       if (e.key === 'Escape') {
         onComplete();
-      } else if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
+      } else if ((e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') && currentStep < steps.length -1) {
+        if(e.key === ' ') e.preventDefault();
         handleNext();
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === 'ArrowLeft' && currentStep > 0) {
         handlePrevious();
       } else if (e.key === 'Home') {
         jumpToStep(0);
-      } else if (e.key === 'End') {
+      } else if (e.key === 'End' && steps.length > 0) {
         jumpToStep(steps.length - 1);
-      } else if (e.key === 'T') {
-        toggleTransparency();
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentStep, steps, onComplete, moreTransparent]);
+  }, [currentStep, steps, onComplete]);
 
   // Check if element is in viewport
   const isElementInViewport = (el) => {
+    if (!el) return false;
     const rect = el.getBoundingClientRect();
     return (
       rect.top >= 0 &&
       rect.left >= 0 &&
-      rect.bottom <= window.innerHeight &&
-      rect.right <= window.innerWidth
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
     );
   };
 
@@ -161,7 +158,7 @@ const TutorialSystem = forwardRef(({
       if (typeof onPrevStep === 'function') {
         onPrevStep(currentStep - 1);
       } else {
-        onNextStep(currentStep - 1);
+        onNextStep(currentStep - 1); 
       }
     }
   };
@@ -173,19 +170,21 @@ const TutorialSystem = forwardRef(({
   // Jump to a specific step
   const jumpToStep = (stepIndex) => {
     if (stepIndex >= 0 && stepIndex < steps.length) {
-      if (typeof onPrevStep === 'function' && stepIndex < currentStep) {
-        onPrevStep(stepIndex);
-      } else {
-        onNextStep(stepIndex);
-      }
+       if (typeof onPrevStep === 'function' && stepIndex < currentStep) {
+         onPrevStep(stepIndex);
+       } else {
+         onNextStep(stepIndex);
+       }
     }
   };
 
   if (!isVisible || !steps[currentStep]) return null;
 
+  const overlayClassName = `tutorial-overlay ${currentStep === 0 ? 'tutorial-overlay-step1' : ''}`;
+
   return (
     <div 
-      className={`tutorial-overlay ${moreTransparent ? 'fully-transparent' : ''}`} 
+      className={overlayClassName} 
       ref={node => {
         overlayRef.current = node;
         if (ref) {
@@ -197,6 +196,7 @@ const TutorialSystem = forwardRef(({
         }
       }}
     >
+      {}
       <div 
         className="tutorial-popup"
         style={popupStyles}
@@ -205,14 +205,6 @@ const TutorialSystem = forwardRef(({
         <div className="tutorial-header">
           <h3>{steps[currentStep].title}</h3>
           <div className="tutorial-header-buttons">
-            <button 
-              onClick={toggleTransparency} 
-              className="tutorial-transparency-toggle" 
-              aria-label={moreTransparent ? "Decrease Transparency" : "Increase Transparency"}
-              title={moreTransparent ? "Decrease Transparency" : "Increase Transparency"}
-            >
-              {moreTransparent ? "👁️" : "👓"}
-            </button>
             <button 
               onClick={() => jumpToStep(0)} 
               className="tutorial-restart-button" 
@@ -266,7 +258,7 @@ const TutorialSystem = forwardRef(({
             </button>
           </div>
           
-          {/* Step indicator dots */}
+          {}
           <div className="tutorial-steps-indicator">
             {steps.map((step, index) => (
               <button
@@ -281,9 +273,10 @@ const TutorialSystem = forwardRef(({
         </div>
       </div>
       
-      {steps[currentStep].selector && (
+      {}
+      {steps[currentStep].selector && highlightStyles.width && (
         <div 
-          className={`tutorial-highlight ${moreTransparent ? 'highlight-transparent' : ''}`}
+          className="tutorial-highlight"
           style={highlightStyles} 
           ref={highlightRef}
         />
