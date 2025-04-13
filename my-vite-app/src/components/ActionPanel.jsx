@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Action from '../models/Action';
 
-// Add onRemoveAction prop
-function ActionPanel({ selectedAsset, onAddAction, onRemoveAction }) {
+// Add onSwitchToAssets prop
+function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAssets }) {
   const [currentView, setCurrentView] = useState('actions'); // 'actions', 'options'
   const [selectedTrigger, setSelectedTrigger] = useState(null);
 
@@ -70,10 +70,26 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction }) {
     setSelectedTrigger(null);
   };
 
+  // Handle back button click to go to assets panel
+  const handleBackToAssets = () => {
+    if (typeof onSwitchToAssets === 'function') {
+      onSwitchToAssets();
+    }
+  };
+
   // Show the list of action triggers
   const renderActionTriggers = () => (
     <>
-      <h2>Actions</h2>
+      <div className="action-panel-header">
+        <button 
+          className="back-arrow-button" 
+          onClick={handleBackToAssets}
+          aria-label="Back to Assets Panel"
+        >
+          ←
+        </button>
+        <h2>Actions</h2>
+      </div>
 
       {actionTriggers.map(trigger => (
         <button
@@ -85,8 +101,8 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction }) {
         </button>
       ))}
 
-      {/* Show current actions on selected asset */}
-      {selectedAsset && selectedAsset.actions && selectedAsset.actions.length > 0 && (
+      {/* Show asset preview and current actions */}
+      {selectedAsset && (
         <div className="selected-asset-actions">
           <div className="selected-asset-preview">
             <img
@@ -98,32 +114,39 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction }) {
                 height: '32px'
               }}
             />
+            <span>{selectedAsset.name}</span>
           </div>
 
-          {/* Added header for clarity */}
-          <h3>Current Actions:</h3>
-          <div className="action-list">
-            {selectedAsset.actions.map(action => {
-              const trigger = actionTriggers.find(t => t.id === action.type);
-              const behavior = actionBehaviors[action.type]?.find(b => b.id === action.behavior);
+          {/* Show current actions if there are any */}
+          {selectedAsset.actions && selectedAsset.actions.length > 0 ? (
+            <>
+              <h3>Current Actions:</h3>
+              <div className="action-list">
+                {selectedAsset.actions.map(action => {
+                  const trigger = actionTriggers.find(t => t.id === action.type);
+                  const behavior = actionBehaviors[action.type]?.find(b => b.id === action.behavior);
 
-              return (
-                <div key={action.id} className="action-item">
-                  <div className="action-labels">
-                    <span className="action-trigger-label">{trigger?.name || action.type}</span>
-                    <span className="action-behavior-label">{behavior?.name || action.behavior}</span>
-                  </div>
-                  <button
-                    className="remove-action-button"
-                    onClick={() => onRemoveAction(action.id)}
-                    aria-label={`Remove action ${trigger?.name || action.type} - ${behavior?.name || action.behavior}`}
-                  >
-                    &times;
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                  return (
+                    <div key={action.id} className="action-item">
+                      <div className="action-labels">
+                        <span className="action-trigger-label">{trigger?.name || action.type}</span>
+                        <span className="action-behavior-label">{behavior?.name || action.behavior}</span>
+                      </div>
+                      <button
+                        className="remove-action-button"
+                        onClick={() => onRemoveAction(action.id)}
+                        aria-label={`Remove action ${trigger?.name || action.type} - ${behavior?.name || action.behavior}`}
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <h3>No actions yet</h3>
+          )}
         </div>
       )}
     </>
@@ -137,7 +160,16 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction }) {
 
     return (
       <>
-        <h2>{selectedTrigger.name} Options</h2>
+        <div className="action-panel-header">
+          <button 
+            className="back-arrow-button" 
+            onClick={() => setCurrentView('actions')}
+            aria-label="Back to Actions List"
+          >
+            ←
+          </button>
+          <h2>{selectedTrigger.name} Options</h2>
+        </div>
 
         {availableBehaviors.length > 0 ? ( // Check if behaviors exist
           availableBehaviors.map(behavior => (
@@ -166,10 +198,6 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction }) {
           /> }
           <div className="selected-trigger-label">{selectedTrigger.name}</div>
         </div>
-         {/* Added Back button */}
-        <button onClick={() => setCurrentView('actions')} className="back-to-actions-button">
-           Back to Actions
-        </button>
       </>
     );
   };
@@ -179,6 +207,19 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction }) {
       {selectedAsset ? (
         currentView === 'actions' ? renderActionTriggers() : renderBehaviorOptions()
       ) : (
+        <div className="action-panel-header">
+          <button 
+            className="back-arrow-button" 
+            onClick={handleBackToAssets}
+            aria-label="Back to Assets Panel"
+          >
+            ←
+          </button>
+          <h2>Actions</h2>
+        </div>
+      )}
+      
+      {!selectedAsset && (
         <div className="no-selection">
           <p>Click on an asset in the canvas to add actions</p>
         </div>

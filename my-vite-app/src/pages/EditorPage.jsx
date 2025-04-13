@@ -210,6 +210,10 @@ function EditorPage() {
     setProjectName(event.target.value);
   };
 
+  // Handler for switching to assets panel
+  const handleSwitchToAssetsPanel = () => {
+    setActivePanel('assets');
+  };
 
   return (
     <div className="editor-page">
@@ -238,6 +242,7 @@ function EditorPage() {
               selectedAsset={getSelectedAsset()}
               onAddAction={handleAddAction}
               onRemoveAction={handleRemoveAction}
+              onSwitchToAssets={handleSwitchToAssetsPanel}
             />
           )}
         </div>

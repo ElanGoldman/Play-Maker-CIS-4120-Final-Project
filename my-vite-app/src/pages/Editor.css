@@ -440,3 +440,39 @@ canvas img {
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
 }
+
+.action-panel-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.action-panel-header h2 {
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.back-arrow-button {
+  background: none;
+  border: none;
+  color: #64ffda;
+  font-size: 1.5rem;
+  padding: 0;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+}
+
+.back-arrow-button:hover {
+  color: #5a8a87;
+  transform: scale(1.1);
+}
+
+.action-panel h2 {
+  margin-bottom: 0;
+}
