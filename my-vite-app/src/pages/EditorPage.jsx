@@ -14,6 +14,7 @@ function EditorPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [activePanel, setActivePanel] = useState('assets'); // 'assets' or 'actions'
+  const [isOptionsVisible, setIsOptionsVisible] = useState(false);
 
   // TODO: Will need to update for our new tutuorial game
   const [availableAssets] = useState([
@@ -76,14 +77,17 @@ function EditorPage() {
 
     setActivePanel('assets');
     setSelectedAssetId(null);
+    setIsOptionsVisible(false);
   }, [projectId]);
 
   // Update active panel based on selection
   useEffect(() => {
     if (selectedAssetId) {
       setActivePanel('actions');
+      // Don't reset isOptionsVisible here - let the ActionPanel control it
     } else {
       setActivePanel('assets');
+      setIsOptionsVisible(false);
     }
   }, [selectedAssetId]);
 
@@ -119,6 +123,7 @@ function EditorPage() {
   // Handle asset selection on canvas
   const handleAssetSelected = (assetId) => {
     setSelectedAssetId(assetId);
+    setIsOptionsVisible(false);
   };
 
   // Add action to the selected asset
@@ -140,6 +145,7 @@ function EditorPage() {
         return asset;
       });
     });
+    setIsOptionsVisible(false);
   };
 
   const handleRemoveAction = (actionIdToRemove) => {
@@ -210,9 +216,22 @@ function EditorPage() {
     setProjectName(event.target.value);
   };
 
-  // Handler for switching to assets panel
-  const handleSwitchToAssetsPanel = () => {
-    setActivePanel('assets');
+  // Handler for back button in ActionPanel
+  const handlePanelChange = (panel) => {
+    setActivePanel(panel);
+    if (panel === 'assets') {
+      setSelectedAssetId(null);
+      setIsOptionsVisible(false);
+    }
+  };
+
+  const handleOptionsVisibilityChange = (isVisible) => {
+    console.log('Options visibility changing to:', isVisible);
+    setIsOptionsVisible(isVisible);
+    
+    setTimeout(() => {
+      console.log('Options visibility after update:', isOptionsVisible);
+    }, 100);
   };
 
   return (
@@ -230,7 +249,7 @@ function EditorPage() {
         </button>
       </header>
 
-      <div className="editor-layout">
+      <div className={`editor-layout ${isOptionsVisible ? 'options-expanded' : ''}`}>
         <div className="left-panel">
           {activePanel === 'assets' ? (
             <AssetPanel
@@ -242,7 +261,8 @@ function EditorPage() {
               selectedAsset={getSelectedAsset()}
               onAddAction={handleAddAction}
               onRemoveAction={handleRemoveAction}
-              onSwitchToAssets={handleSwitchToAssetsPanel}
+              onSwitchToAssets={() => handlePanelChange('assets')}
+              onOptionsVisibilityChange={handleOptionsVisibilityChange}
             />
           )}
         </div>

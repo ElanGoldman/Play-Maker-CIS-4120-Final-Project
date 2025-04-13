@@ -1,16 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Action from '../models/Action';
 
-// Add onSwitchToAssets prop
-function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAssets }) {
+function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAssets, onOptionsVisibilityChange }) {
   const [currentView, setCurrentView] = useState('actions'); // 'actions', 'options'
   const [selectedTrigger, setSelectedTrigger] = useState(null);
 
-  // Reset the view when selected asset changes
+  // Keep track of previous asset ID to detect actual changes
+  const prevAssetIdRef = useRef(selectedAsset?.canvasId);
+  
+  // Reset the view only when the selected asset actually changes
   useEffect(() => {
-    setCurrentView('actions');
-    setSelectedTrigger(null);
-  }, [selectedAsset]);
+    // Only reset if we're getting a new asset with a different ID
+    if (selectedAsset && selectedAsset.canvasId !== prevAssetIdRef.current) {
+      console.log('Asset changed from', prevAssetIdRef.current, 'to', selectedAsset.canvasId);
+      setCurrentView('actions');
+      setSelectedTrigger(null);
+      
+      // Notify parent component that options panel is not visible
+      if (typeof onOptionsVisibilityChange === 'function') {
+        onOptionsVisibilityChange(false);
+      }
+      
+      prevAssetIdRef.current = selectedAsset.canvasId;
+    }
+  }, [selectedAsset, onOptionsVisibilityChange]);
 
   // Available action types/triggers
   const actionTriggers = [
@@ -45,8 +58,21 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
 
   // Handle action trigger selection
   const handleTriggerSelect = (trigger) => {
+    console.log('Trigger selected:', trigger.name);
     setSelectedTrigger(trigger);
     setCurrentView('options');
+    
+    // Notify parent component that options panel is visible
+    if (typeof onOptionsVisibilityChange === 'function') {
+      onOptionsVisibilityChange(true);
+      console.log('Options visibility set to true');
+    } else {
+      console.warn('onOptionsVisibilityChange function not provided');
+    }
+    
+    setTimeout(() => {
+      console.log('Current view after timeout:', currentView);
+    }, 500);
   };
 
   // Handle behavior selection
@@ -68,12 +94,26 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
     // Reset view to actions list
     setCurrentView('actions');
     setSelectedTrigger(null);
+    
+    if (typeof onOptionsVisibilityChange === 'function') {
+      onOptionsVisibilityChange(false);
+    }
   };
 
   // Handle back button click to go to assets panel
   const handleBackToAssets = () => {
     if (typeof onSwitchToAssets === 'function') {
       onSwitchToAssets();
+    }
+  };
+
+  const handleBackToActions = () => {
+    setCurrentView('actions');
+    setSelectedTrigger(null);
+    
+    // Notify parent component that options panel is no longer visible
+    if (typeof onOptionsVisibilityChange === 'function') {
+      onOptionsVisibilityChange(false);
     }
   };
 
@@ -101,8 +141,8 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
         </button>
       ))}
 
-      {/* Show asset preview and current actions */}
-      {selectedAsset && (
+      {/* Show current actions on selected asset */}
+      {selectedAsset && selectedAsset.actions && selectedAsset.actions.length > 0 && (
         <div className="selected-asset-actions">
           <div className="selected-asset-preview">
             <img
@@ -114,39 +154,32 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
                 height: '32px'
               }}
             />
-            <span>{selectedAsset.name}</span>
           </div>
 
-          {/* Show current actions if there are any */}
-          {selectedAsset.actions && selectedAsset.actions.length > 0 ? (
-            <>
-              <h3>Current Actions:</h3>
-              <div className="action-list">
-                {selectedAsset.actions.map(action => {
-                  const trigger = actionTriggers.find(t => t.id === action.type);
-                  const behavior = actionBehaviors[action.type]?.find(b => b.id === action.behavior);
+          {/* Added header for clarity */}
+          <h3>Current Actions:</h3>
+          <div className="action-list">
+            {selectedAsset.actions.map(action => {
+              const trigger = actionTriggers.find(t => t.id === action.type);
+              const behavior = actionBehaviors[action.type]?.find(b => b.id === action.behavior);
 
-                  return (
-                    <div key={action.id} className="action-item">
-                      <div className="action-labels">
-                        <span className="action-trigger-label">{trigger?.name || action.type}</span>
-                        <span className="action-behavior-label">{behavior?.name || action.behavior}</span>
-                      </div>
-                      <button
-                        className="remove-action-button"
-                        onClick={() => onRemoveAction(action.id)}
-                        aria-label={`Remove action ${trigger?.name || action.type} - ${behavior?.name || action.behavior}`}
-                      >
-                        &times;
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <h3>No actions yet</h3>
-          )}
+              return (
+                <div key={action.id} className="action-item">
+                  <div className="action-labels">
+                    <span className="action-trigger-label">{trigger?.name || action.type}</span>
+                    <span className="action-behavior-label">{behavior?.name || action.behavior}</span>
+                  </div>
+                  <button
+                    className="remove-action-button"
+                    onClick={() => onRemoveAction(action.id)}
+                    aria-label={`Remove action ${trigger?.name || action.type} - ${behavior?.name || action.behavior}`}
+                  >
+                    &times;
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </>
@@ -163,7 +196,7 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
         <div className="action-panel-header">
           <button 
             className="back-arrow-button" 
-            onClick={() => setCurrentView('actions')}
+            onClick={handleBackToActions}
             aria-label="Back to Actions List"
           >
             ←
@@ -202,26 +235,38 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
     );
   };
 
+  console.log('Rendering ActionPanel', { 
+    currentView, 
+    selectedTrigger: selectedTrigger?.name,
+    showOptionsPanel: currentView === 'options' && selectedTrigger 
+  });
+  
   return (
-    <div className="action-panel">
-      {selectedAsset ? (
-        currentView === 'actions' ? renderActionTriggers() : renderBehaviorOptions()
-      ) : (
-        <div className="action-panel-header">
-          <button 
-            className="back-arrow-button" 
-            onClick={handleBackToAssets}
-            aria-label="Back to Assets Panel"
-          >
-            ←
-          </button>
-          <h2>Actions</h2>
-        </div>
-      )}
+    <div className="action-panels-container">
+      <div className={`action-panel ${currentView === 'options' ? 'with-options' : ''}`}>
+        {selectedAsset ? renderActionTriggers() : (
+          <>
+            <div className="action-panel-header">
+              <button 
+                className="back-arrow-button" 
+                onClick={handleBackToAssets}
+                aria-label="Back to Assets Panel"
+              >
+                ←
+              </button>
+              <h2>Actions</h2>
+            </div>
+            
+            <div className="no-selection">
+              <p>Click on an asset in the canvas to add actions</p>
+            </div>
+          </>
+        )}
+      </div>
       
-      {!selectedAsset && (
-        <div className="no-selection">
-          <p>Click on an asset in the canvas to add actions</p>
+      {currentView === 'options' && (
+        <div className="options-panel" key="options-panel">
+          {renderBehaviorOptions()}
         </div>
       )}
     </div>

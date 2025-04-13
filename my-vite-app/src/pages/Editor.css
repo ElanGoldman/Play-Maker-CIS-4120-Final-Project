@@ -50,13 +50,75 @@
   grid-template-columns: 260px 1fr;
   gap: 1rem;
   height: calc(100vh - 80px);
+  transition: grid-template-columns 0.3s ease;
 }
 
 .left-panel {
   height: 100%;
   background-color: #112240;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
+}
+
+.action-panels-container {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  overflow: visible;
+}
+
+.action-panel {
+  padding: 1rem;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background-color: #112240;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+  z-index: 1;
+}
+
+.action-panel.with-options {
+  width: 100%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Options panel that slides out to the right */
+.options-panel {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  height: 100%;
+  width: 260px;
+  background-color: #112240;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-left: 1px solid #233554;
+  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 100; /* Higher z-index to ensure it appears above all elements */
+  animation: slideIn 0.3s ease forwards;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .canvas-container {
@@ -383,6 +445,10 @@ canvas.drag-over {
     height: auto;
     gap: 1rem;
   }
+  
+  .editor-layout.options-expanded {
+    grid-template-columns: 1fr;
+  }
 
   .left-panel {
     height: auto;
@@ -391,6 +457,18 @@ canvas.drag-over {
 
   .canvas-container {
     min-height: 400px;
+  }
+  
+  /* Ensure the options panel appears over other content on smaller screens */
+  .options-panel {
+    position: fixed;
+    left: 220px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: auto;
+    max-height: 80vh;
+    z-index: 1000; /* Very high z-index to ensure it appears on top */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
   }
 }
 
