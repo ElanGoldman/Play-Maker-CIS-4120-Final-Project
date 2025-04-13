@@ -15,9 +15,8 @@ function EditorPage() {
   const [projectName, setProjectName] = useState('');
   const [activePanel, setActivePanel] = useState('assets'); // 'assets' or 'actions'
   const [isOptionsVisible, setIsOptionsVisible] = useState(false);
-
-  // TODO: Will need to update for our new tutuorial game
-  const [availableAssets] = useState([
+  
+  const defaultAssets = [
     new Asset({
       id: 1,
       type: 'sprite',
@@ -42,37 +41,72 @@ function EditorPage() {
       width: 32,
       height: 32
     })
-  ]);
+  ];
+  
+  const [availableAssets, setAvailableAssets] = useState(defaultAssets);
 
+  // Load project data from localStorage, including custom assets
   useEffect(() => {
     setProjectName(`Project ${projectId}`);
+    console.log("Loading project data for ID:", projectId);
 
     const savedProject = localStorage.getItem(`project_${projectId}`);
     if (savedProject) {
       try {
         const parsedProject = JSON.parse(savedProject);
+        console.log("Loaded project data:", parsedProject);
 
-        const loadedAssets = parsedProject.canvasAssets.map(assetData => {
-          const asset = new Asset(assetData);
-
-          if (assetData.actions && Array.isArray(assetData.actions)) {
-            asset.actions = assetData.actions.map(actionData =>
-              new Action(actionData)
-            );
-          } else {
-             asset.actions = []; 
-          }
-          return asset;
-        });
-
-        setCanvasAssets(loadedAssets);
+        if (parsedProject.canvasAssets && Array.isArray(parsedProject.canvasAssets)) {
+          const loadedAssets = parsedProject.canvasAssets.map(assetData => {
+            const asset = new Asset(assetData);
+  
+            if (assetData.actions && Array.isArray(assetData.actions)) {
+              asset.actions = assetData.actions.map(actionData =>
+                new Action(actionData)
+              );
+            } else {
+               asset.actions = []; 
+            }
+            return asset;
+          });
+  
+          setCanvasAssets(loadedAssets);
+        }
+        
         setProjectName(parsedProject.name || `Project ${projectId}`);
+        
+        if (parsedProject.availableAssets && Array.isArray(parsedProject.availableAssets)) {
+          // Filter out default assets by ID to avoid duplicates
+          const defaultAssetIds = defaultAssets.map(asset => asset.id);
+          const customAssets = parsedProject.availableAssets
+            .filter(assetData => !defaultAssetIds.includes(assetData.id))
+            .map(assetData => new Asset(assetData));
+          
+          const uniqueCustomAssets = [];
+          const seenIds = new Set();
+          
+          customAssets.forEach(asset => {
+            if (!seenIds.has(asset.id)) {
+              seenIds.add(asset.id);
+              uniqueCustomAssets.push(asset);
+            } else {
+              console.warn(`Duplicate asset ID found: ${asset.id} for ${asset.name}`);
+            }
+          });
+          
+          setAvailableAssets([...defaultAssets, ...uniqueCustomAssets]);
+          console.log("Available assets set to:", [...defaultAssets, ...uniqueCustomAssets]);
+        } else {
+          setAvailableAssets(defaultAssets);
+        }
       } catch (error) {
         console.error('Error loading project data:', error);
         setCanvasAssets([]);
+        setAvailableAssets(defaultAssets);
       }
     } else {
       setCanvasAssets([]);
+      setAvailableAssets(defaultAssets);
     }
 
     setActivePanel('assets');
@@ -91,19 +125,27 @@ function EditorPage() {
     }
   }, [selectedAssetId]);
 
-  // Save project data whenever canvas assets or project name change
+  // Save project data whenever canvas assets/project name/assets change
   useEffect(() => {
     if (canvasAssets.length === 0 && localStorage.getItem(`project_${projectId}`)) {
-    } else {
-       const projectData = {
-         id: projectId,
-         name: projectName,
-         lastSaved: new Date().toISOString(),
-         canvasAssets: canvasAssets.map(asset => asset.toJSON())
-       };
-       localStorage.setItem(`project_${projectId}`, JSON.stringify(projectData));
+      return;
     }
-  }, [canvasAssets, projectId, projectName]); // Trigger save when these change
+    
+    const defaultAssetIds = defaultAssets.map(asset => asset.id);
+    const customAssets = availableAssets.filter(asset => !defaultAssetIds.includes(asset.id));
+    
+    const projectData = {
+      id: projectId,
+      name: projectName,
+      lastSaved: new Date().toISOString(),
+      canvasAssets: canvasAssets.map(asset => asset.toJSON()),
+      availableAssets: customAssets.map(asset => asset.toJSON())
+    };
+    
+    localStorage.setItem(`project_${projectId}`, JSON.stringify(projectData));
+    console.log("Saved project data with custom assets:", customAssets.length);
+    
+  }, [canvasAssets, projectId, projectName, availableAssets]); 
 
   // Helper to get the currently selected asset object
   const getSelectedAsset = () => {
@@ -117,15 +159,15 @@ function EditorPage() {
       ? newAsset
       : new Asset(newAsset);
 
-      setCanvasAssets(prevAssets => {
-        const updatedAssets = [...prevAssets, assetInstance];
-        setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('playmaker:assetAdded', {
-                detail: { assetId: assetInstance.canvasId }
-            }));
-            console.log('Dispatched playmaker:assetAdded');
-        }, 0);
-        return updatedAssets;
+    setCanvasAssets(prevAssets => {
+      const updatedAssets = [...prevAssets, assetInstance];
+      setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('playmaker:assetAdded', {
+              detail: { assetId: assetInstance.canvasId }
+          }));
+          console.log('Dispatched playmaker:assetAdded');
+      }, 0);
+      return updatedAssets;
     });
   };
 
@@ -199,6 +241,19 @@ function EditorPage() {
     }
   };
 
+  // Handle adding a new asset to the available assets
+  const handleAddAvailableAsset = (newAsset) => {
+    const assetExists = availableAssets.some(asset => asset.id === newAsset.id);
+    
+    if (assetExists) {
+      console.warn(`Asset with ID ${newAsset.id} already exists. Not adding duplicate.`);
+      return;
+    }
+    
+    console.log("Adding new available asset:", newAsset.name);
+    setAvailableAssets(prevAssets => [...prevAssets, newAsset]);
+  };
+
   // Toggle play/pause state for the canvas
   const handlePlayToggle = () => {
     // Save current state before entering play mode?
@@ -216,8 +271,8 @@ function EditorPage() {
         return prevAssets.map(asset => new Asset({ // Create new instances
           ...asset,
           actions: asset.actions.map(action => {
-            const newAction = new Action(action); // Create new action instance
-            newAction.isRunning = false; // Reset isRunning flag
+            const newAction = new Action(action);
+            newAction.isRunning = false;
             return newAction;
           })
         }));
@@ -273,7 +328,7 @@ function EditorPage() {
           {activePanel === 'assets' ? (
             <AssetPanel
               assets={availableAssets}
-              onAddAsset={() => {}}
+              onAddAsset={handleAddAvailableAsset}
             />
           ) : (
             <ActionPanel

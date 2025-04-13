@@ -1,7 +1,8 @@
 class Asset {
   constructor(options = {}) {
-    this.id = options.id || `asset-${Date.now()}`;
-    this.canvasId = options.canvasId || `canvas-${Date.now()}`;
+    // IDs are strings, not numbers, for better/consistent comparison
+    this.id = options.id ? String(options.id) : `asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.canvasId = options.canvasId || `canvas-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.type = options.type || 'sprite';
     this.name = options.name || 'Untitled Asset';
     this.imgSrc = options.imgSrc || '';
@@ -121,7 +122,8 @@ class Asset {
   clone() {
     return new Asset({
       ...this,
-      canvasId: `canvas-${Date.now()}`, // Generate a new canvasId
+      id: `asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      canvasId: `canvas-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       actions: [...this.actions], // Clone the actions array
       properties: {...this.properties}, // Clone the properties object
       originalWidth: this.originalWidth,

@@ -1,8 +1,9 @@
-import { useState } from 'react';
-// import Asset from '../models/Asset';
+import { useState, useEffect, useRef } from 'react';
+import Asset from '../models/Asset';
 
-function AssetPanel({ assets }) {
+function AssetPanel({ assets, onAddAsset }) {
   const [filter, setFilter] = useState('');
+  const fileInputRef = useRef(null);
   
   const filteredAssets = assets.filter(asset => 
     asset.name.toLowerCase().includes(filter.toLowerCase())
@@ -35,6 +36,52 @@ function AssetPanel({ assets }) {
         e.dataTransfer.setDragImage(img, 16, 16);
       };
     }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileSelect = (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+      // Only process image files
+      if (!file.type.startsWith('image/')) {
+        alert(`File ${file.name} is not an image.`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imgSrc = event.target.result;
+        
+        const img = new Image();
+        img.onload = () => {
+          const newAsset = new Asset({
+            id: `asset-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            type: 'sprite',
+            name: file.name.split('.')[0], // Use filename without extension as asset name
+            imgSrc: imgSrc,
+            width: 32,
+            height: 32,
+            originalWidth: img.width,
+            originalHeight: img.height
+          });
+          
+          if (typeof onAddAsset === 'function') {
+            onAddAsset(newAsset);
+          }
+        };
+        img.src = imgSrc;
+      };
+      
+      // Read the image file as a data URL
+      reader.readAsDataURL(file);
+    });
+    
+    e.target.value = '';
   };
 
   return (
@@ -72,7 +119,18 @@ function AssetPanel({ assets }) {
         ))}
       </div>
       
-      <button className="import-button">Import Asset</button>
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        accept="image/*"
+        onChange={handleFileSelect}
+        multiple
+      />
+      
+      <button className="import-button" onClick={handleImportClick}>
+        Import Asset
+      </button>
     </div>
   );
 }
