@@ -1,0 +1,48 @@
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(10, 25, 47, 0.6); /* Default semi-transparent overlay */
+  z-index: 1000;
+  pointer-events: all;
+  transition: background-color 0.3s ease;
+}
+
+.tutorial-overlay.fully-transparent {
+  background-color: rgba(10, 25, 47, 0.05);
+  pointer-events: none; /* Let clicks pass through in transparent mode */
+}
+
+.tutorial-overlay.fully-transparent .tutorial-highlight {
+  pointer-events: none; /* Let clicks pass through highlight */
+}
+
+.tutorial-highlight {
+  position: absolute;
+  box-shadow: 0 0 0 9999px rgba(10, 25, 47, 0.6);
+  border: 2px solid #64ffda;
+  border-radius: 4px;
+  z-index: 999;
+  pointer-events: none;
+  animation: pulse 2s infinite;
+  transition: box-shadow 0.3s ease;
+}
+
+.highlight-transparent {
+  box-shadow: 0 0 0 9999px rgba(10, 25, 47, 0.05) !important;
+}
+
+.tutorial-popup {
+  background-color: rgba(17, 34, 64, 0.9); 
+  border: 2px solid #64ffda;
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 350px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  pointer-events: auto; /* Always capture clicks on the popup */
+  animation: fadeIn 0.3s ease-in-out;
+  backdrop-filter: blur(5px);
+}
