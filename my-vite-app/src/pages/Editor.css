@@ -675,3 +675,27 @@ canvas img {
     box-shadow: 0 0 0 0 rgba(100, 255, 218, 0);
   }
 }
+
+.delete-button {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background-color: rgba(255, 107, 107, 0.8);
+  color: #0a192f;
+  font-size: 1.5rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+
+.delete-button:hover {
+  background-color: rgba(255, 107, 107, 1);
+  transform: scale(1.1);
+}

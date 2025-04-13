@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Asset from '../models/Asset';
 
-function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayToggle, onAssetDraggedToCanvas, onAssetResized }) {
+function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayToggle, onAssetDraggedToCanvas, onAssetResized, onAssetDeleted }) {
   const canvasRef = useRef(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [assetImages, setAssetImages] = useState({});
@@ -211,6 +211,12 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
       x >= handleX && x <= handleX + handleSize &&
       y >= handleY && y <= handleY + handleSize
     );
+  };
+  
+  const handleDeleteAsset = () => {
+    if (selectedAssetId && typeof onAssetDeleted === 'function') {
+      onAssetDeleted(selectedAssetId);
+    }
   };
   
   // Handle mouse move for cursor updates, drag updates, and resize preview
@@ -479,6 +485,7 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
         style={{ cursor: cursorStyle }}
       />
       
+      {/* Play button */}
       <button 
         className="play-button" 
         onClick={handlePlayToggle}
@@ -486,6 +493,18 @@ function Canvas({ assets, selectedAssetId, onAssetSelected, isPlaying, onPlayTog
       >
         {isPlaying ? '⏸' : '▶'}
       </button>
+      
+      {/* Delete button - only show when an asset is selected and not in play mode */}
+      {selectedAssetId && !isPlaying && (
+        <button 
+          className="delete-button" 
+          onClick={handleDeleteAsset}
+          aria-label="Delete selected asset"
+          title="Delete selected asset"
+        >
+          🗑️
+        </button>
+      )}
     </div>
   );
 }

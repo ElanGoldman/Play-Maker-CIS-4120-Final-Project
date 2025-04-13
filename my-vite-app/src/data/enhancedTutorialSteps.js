@@ -14,7 +14,7 @@ const enhancedTutorialSteps = [
     title: "Asset Panel",
     content: "First, let's add a character to your game. The Asset Panel on the left contains game objects you can use. Click and drag an asset to the canvas.",
     selector: ".asset-item",
-    position: { top: '30%', left: '20%' },
+    position: { top: '35%', left: '25%' },
     additionalContent:
       "Try dragging Mario or Luigi to the canvas area.",
     autoAdvance: {
@@ -42,7 +42,7 @@ const enhancedTutorialSteps = [
     title: "Select Your Asset",
     content: "Now click on your character on the canvas to select it. This allows you to add behaviors and actions to make it interactive.",
     selector: ".canvas-container",
-    position: { top: '50%', left: '50%' },      
+    position: { top: '50%', left: '20%' },      
     additionalContent: 
       "Selected assets are highlighted with a teal border.",
     autoAdvance: {
@@ -55,7 +55,7 @@ const enhancedTutorialSteps = [
     title: "Adding Actions",
     content: "Now that your asset is selected, the Actions panel has appeared. Click on a trigger like 'Mouse Down' to define when an action should happen.",
     selector: ".action-trigger-button",
-    position: { top: '40%', left: '20%' },
+    position: { top: '40%', left: '35%' },
     additionalContent: 
       "Triggers are events that activate behaviors:\n" +
       "• Mouse Down: When player clicks on the asset\n" +
@@ -73,7 +73,7 @@ const enhancedTutorialSteps = [
     title: "Choosing Behavior",
     content: "Now select a behavior that will happen when the trigger is activated. For example, select 'Jump' to make your character jump when clicked.",
     selector: ".action-behavior-button",
-    position: { top: '40%', left: '20%' },
+    position: { top: '40%', left: '55%' },
     additionalContent: 
       "Behaviors determine what happens when triggered:\n" +
       "• Jump: Makes the asset leap upward\n" +
@@ -90,7 +90,7 @@ const enhancedTutorialSteps = [
     title: "Test Your Game",
     content: "Excellent! Now let's test your game. Press the play button in the top-right corner of the canvas to see your creation in action.",
     selector: ".play-button",
-    position: { top: '30%', left: '70%' },
+    position: { top: '50%', left: '85%' },
     additionalContent: 
       "While in play mode:\n" +
       "• Try clicking on your character to trigger the action\n" +

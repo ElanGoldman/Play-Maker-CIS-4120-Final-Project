@@ -189,6 +189,16 @@ function EditorPage() {
     });
   };
 
+  const handleAssetDeleted = (assetId) => {
+    setCanvasAssets(prevAssets => {
+      return prevAssets.filter(asset => asset.canvasId !== assetId);
+    });
+    
+    if (selectedAssetId === assetId) {
+      setSelectedAssetId(null);
+    }
+  };
+
   // Toggle play/pause state for the canvas
   const handlePlayToggle = () => {
     // Save current state before entering play mode?
@@ -282,6 +292,7 @@ function EditorPage() {
           onAssetSelected={handleAssetSelected}
           onAssetDraggedToCanvas={handleAssetDropped}
           onAssetResized={handleAssetResized}
+          onAssetDeleted={handleAssetDeleted}
           isPlaying={isPlaying}
           onPlayToggle={handlePlayToggle}
         />
