@@ -2,36 +2,36 @@ import { useState, useEffect, useRef } from 'react';
 import Action from '../models/Action';
 import '../styles/ActionPanels.css';
 
-// SVG Icon Components
+// SVG Icon Components with smaller size
 const MouseIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="6" y="3" width="12" height="18" rx="6" />
     <line x1="12" y1="7" x2="12" y2="11" />
   </svg>
 );
 
 const StartIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="5 3 19 12 5 21 5 3" fill="#64ffda" />
   </svg>
 );
 
 const ArrowUpIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="19" x2="12" y2="5" />
     <polyline points="5 12 12 5 19 12" />
   </svg>
 );
 
 const SpacebarIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="9" width="16" height="6" rx="2" />
     <line x1="8" y1="12" x2="16" y2="12" strokeWidth="3" />
   </svg>
 );
 
 const JumpIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 22c-4.97 0-9-4.5-9-10v-4h6v4c0 2.21 1.79 4 4 4s4-1.79 4-4v-4h6v4c0 5.5-4 10-9 10z" />
     <path d="M9 6V2" />
     <path d="M15 6V2" />
@@ -39,7 +39,7 @@ const JumpIcon = () => (
 );
 
 const MoveIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M5 9l-3 3 3 3" />
     <path d="M9 5l3-3 3 3" />
     <path d="M9 19l3 3 3-3" />
@@ -205,16 +205,18 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
         <h2>Actions</h2>
       </div>
   
-      {actionTriggers.map(trigger => (
-        <button
-          key={trigger.id}
-          className="action-trigger-button"
-          onClick={() => handleTriggerSelect(trigger)}
-        >
-          <div className="action-icon">{trigger.icon}</div>
-          <span className="action-name">{trigger.name}</span>
-        </button>
-      ))}
+      <div className="action-triggers-grid">
+        {actionTriggers.map(trigger => (
+          <button
+            key={trigger.id}
+            className="action-trigger-button"
+            onClick={() => handleTriggerSelect(trigger)}
+          >
+            <div className="action-icon">{trigger.icon}</div>
+            <span className="action-name">{trigger.name}</span>
+          </button>
+        ))}
+      </div>
   
       {/* Show current actions on selected asset */}
       {selectedAsset && (
@@ -225,8 +227,8 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
               alt={selectedAsset.name}
               style={{
                 imageRendering: 'pixelated',
-                width: '32px',
-                height: '32px'
+                width: '24px',
+                height: '24px'
               }}
             />
           </div>
@@ -299,20 +301,22 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
           <h2>{selectedTrigger.name} Options</h2>
         </div>
 
-        {availableBehaviors.length > 0 ? (
-          availableBehaviors.map(behavior => (
-            <button
-              key={behavior.id}
-              className="action-behavior-button"
-              onClick={() => handleBehaviorSelect(behavior)}
-            >
-              <div className="action-icon">{behavior.icon}</div>
-              <span className="action-name">{behavior.name}</span>
-            </button>
-          ))
-        ) : (
-          <p>No behaviors defined for this trigger.</p>
-        )}
+        <div className="action-behaviors-grid">
+          {availableBehaviors.length > 0 ? (
+            availableBehaviors.map(behavior => (
+              <button
+                key={behavior.id}
+                className="action-behavior-button"
+                onClick={() => handleBehaviorSelect(behavior)}
+              >
+                <div className="action-icon">{behavior.icon}</div>
+                <span className="action-name">{behavior.name}</span>
+              </button>
+            ))
+          ) : (
+            <p>No behaviors defined for this trigger.</p>
+          )}
+        </div>
 
         <div className="selected-asset-preview">
           {selectedAsset && <img
@@ -320,8 +324,8 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
             alt={selectedAsset.name}
             style={{
               imageRendering: 'pixelated',
-              width: '32px',
-              height: '32px'
+              width: '24px',
+              height: '24px'
             }}
           /> }
           <div className="selected-trigger-label">
