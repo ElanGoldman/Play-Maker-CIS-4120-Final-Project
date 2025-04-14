@@ -1,0 +1,123 @@
+.action-trigger-button,
+.action-behavior-button {
+  display: flex;
+  flex-direction: column;  
+  align-items: center;     
+  justify-content: center; 
+  gap: 10px;
+  text-align: center;      
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.action-icon {
+  display: flex;          
+  justify-content: center;
+  align-items: center;
+  font-size: 1.25rem;
+  min-width: 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  background-color: rgba(35, 53, 84, 0.5);
+  transition: all 0.2s ease;
+  margin-bottom: 0;    
+}
+
+.action-icon-small {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-right: 5px;
+  min-width: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.action-name {
+  flex-grow: 1;
+  width: 100%; 
+  text-align: center; 
+}
+
+.action-trigger-label,
+.action-behavior-label {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+}
+
+/* Custom spacebar icon styling */
+.action-icon span.spacebar-icon {
+  display: inline-block;
+  width: 20px;
+  height: 8px;
+  background-color: #64ffda;
+  border-radius: 3px;
+}
+
+.action-icon-small span.spacebar-icon {
+  width: 12px;
+  height: 5px;
+  background-color: #64ffda;
+  border-radius: 2px;
+}
+
+/* Hover effects for buttons with icons */
+.action-trigger-button:hover .action-icon,
+.action-behavior-button:hover .action-icon {
+  background-color: rgba(100, 255, 218, 0.2);
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}
+
+.selected-asset-actions .action-item {
+  padding: 0.75rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-panel-header h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.remove-action-button {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 10px;
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+  right: 0;
+}
+
+.remove-action-button:hover {
+  color: #e03131;
+}
+
+.action-trigger-label,
+.action-behavior-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.action-item {
+  min-height: 40px;
+}
