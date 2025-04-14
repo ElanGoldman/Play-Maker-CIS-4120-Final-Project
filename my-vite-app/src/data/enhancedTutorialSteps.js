@@ -53,8 +53,8 @@ const enhancedTutorialSteps = [
   {
     id: 'adding-actions',
     title: "Adding Actions",
-    content: "Now that your asset is selected, the Actions panel has appeared. Click on a trigger like 'Mouse Down' to define when an action should happen.",
-    selector: ".action-trigger-button",
+    content: "Now that your asset is selected, the Actions panel has appeared. Click on the 'Press Space' trigger to define when an action should happen.",
+    selector: ".action-trigger-button:nth-child(4)",
     position: { top: '40%', left: '35%' },
     additionalContent: 
       "Triggers are events that activate behaviors:\n" +
@@ -63,7 +63,7 @@ const enhancedTutorialSteps = [
       "• Press Up Arrow: When player presses the up arrow key\n" +
       "• Press Space: When player presses the space bar",
     autoAdvance: {
-      selector: '.action-trigger-button',
+      selector: '.action-trigger-button:nth-child(4)',
       event: 'click',
       delay: 500
     }
@@ -71,7 +71,7 @@ const enhancedTutorialSteps = [
   {
     id: 'choosing-behavior',
     title: "Choosing Behavior",
-    content: "Now select a behavior that will happen when the trigger is activated. For example, select 'Jump' to make your character jump when clicked.",
+    content: "Now select a behavior that will happen when the trigger is activated. For example, select 'Jump' to make your character jump when the space bar is pressed.",
     selector: ".action-behavior-button",
     position: { top: '40%', left: '55%' },
     additionalContent: 
@@ -93,7 +93,7 @@ const enhancedTutorialSteps = [
     position: { top: '50%', left: '85%' },
     additionalContent: 
       "While in play mode:\n" +
-      "• Try clicking on your character to trigger the action\n" +
+      "• Press the space bar to trigger the action you just created\n" +
       "• Press the play button again to stop and return to editing",
     autoAdvance: {
       selector: '.play-button',
