@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import Logo from '../components/Logo';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -9,16 +10,14 @@ function HomePage() {
 
   const handleCreateProject = () => {
     const newId = Math.max(...sampleProjects.map(p => p.id), 0) + 1;
-    navigate(`/editor/${newId}`);
+    navigate(`/tutorial/${newId}`);
   };
 
   return (
     <div className="home-page-container">
       <div className="home-page">
         <div className="logo-container">
-          <div className="logo">
-            <div className="logo-placeholder">PLAY MAKER</div>
-          </div>
+          <Logo />
           <h2 className="tagline">Learn as you go!</h2>
         </div>
         

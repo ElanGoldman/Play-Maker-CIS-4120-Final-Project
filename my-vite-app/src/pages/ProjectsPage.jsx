@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Logo from '../components/Logo';
 
 function ProjectsPage() {
   const [projects, setProjects] = useState([
@@ -19,13 +20,13 @@ function ProjectsPage() {
     };
     
     setProjects([...projects, newProject]);
-    navigate(`/editor/${newId}`);
+    navigate(`/tutorial/${newId}`);
   };
   
   return (
     <div className="projects-page">
       <header>
-        <h1>PLAY MAKER</h1>
+        <Logo small />
       </header>
       
       <h1>Projects</h1>

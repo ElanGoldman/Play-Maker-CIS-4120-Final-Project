@@ -1,9 +1,13 @@
 function Logo({ small }) {
   return (
     <div className={`logo ${small ? 'logo-small' : ''}`}>
-      <div className="logo-placeholder">PLAY MAKER</div>
+      <img 
+        src="/Logo.png" 
+        alt="PLAY MAKER Logo" 
+        className="logo-image"
+      />
     </div>
   );
 }
 
-export default Logo; //TODO: remeber to add logo, rn temporary place holder
+export default Logo;
