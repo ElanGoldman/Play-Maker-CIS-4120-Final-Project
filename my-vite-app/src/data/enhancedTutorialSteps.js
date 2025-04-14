@@ -16,7 +16,7 @@ const enhancedTutorialSteps = [
     selector: ".asset-item",
     position: { top: '35%', left: '25%' },
     additionalContent:
-      "Try dragging Mario or Luigi to the canvas area.",
+      "Try dragging Mario to the canvas area.",
     autoAdvance: {
       selector: '.asset-item',
       event: 'dragstart',
