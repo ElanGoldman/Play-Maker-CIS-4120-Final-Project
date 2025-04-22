@@ -315,7 +315,7 @@ function TutorialWrapper({ children, projectId, tutorialSteps }) {
           aria-label="Restart Tutorial"
           title="Restart Tutorial"
         >
-          ?
+          ❔
         </button>
       )}
     </div>

@@ -104,7 +104,7 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  z-index: 100; /* Higher z-index to ensure it appears above all elements */
+  z-index: 100;
   animation: slideIn 0.3s ease forwards;
   pointer-events: auto;
   visibility: visible;
@@ -146,11 +146,10 @@ canvas.drag-over {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background-color: rgba(90, 138, 135, 0.8);
   color: #0a192f;
-  font-size: 1.5rem;
-  width: 50px;
-  height: 50px;
+  font-size: 2.5rem;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -158,10 +157,25 @@ canvas.drag-over {
   border: none;
   cursor: pointer;
   z-index: 10;
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.play-button:hover {
-  background-color: rgba(100, 255, 218, 1);
+.play-button.paused-state {
+  background-color: rgba(46, 204, 113, 0.8);
+}
+
+.play-button.paused-state:hover {
+  background-color: rgba(46, 204, 113, 1);
+  transform: scale(1.05);
+}
+
+.play-button.playing-state {
+  background-color: rgba(231, 76, 60, 0.8);
+}
+
+.play-button.playing-state:hover {
+  background-color: rgba(231, 76, 60, 1);
+  transform: scale(1.05);
 }
 
 .asset-panel {
@@ -361,7 +375,9 @@ canvas.drag-over {
 
 .action-labels {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
   flex-grow: 1;
 }
 
@@ -700,8 +716,6 @@ canvas img {
   transform: scale(1.1);
 }
 
-
-/* Grid layout for action triggers */
 .action-triggers-grid, 
 .action-behaviors-grid {
   display: grid;
@@ -809,4 +823,28 @@ canvas img {
   animation: slideIn 0.3s ease forwards;
   pointer-events: auto;
   visibility: visible;
+}
+
+.editor-notification {
+  position: fixed;
+  bottom: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #5a8a87;
+  color: #0a192f;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1100;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-align: center;
+  animation: fadeInOut 3s ease-in-out forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
 }
