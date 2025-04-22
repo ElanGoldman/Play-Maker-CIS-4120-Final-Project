@@ -3,7 +3,7 @@ const enhancedTutorialSteps = [
     id: 'welcome',
     title: "Welcome to PLAY MAKER!",
     content: "This tutorial will guide you through creating your first game. We'll walk through the entire process step by step.",
-    position: { top: '40%', left: '50%' },
+    position: { top: '50%', left: '50%' },
     additionalContent: "Keyboard Shortcuts:\n" +
       "→ or Space: Next step\n" +
       "←: Previous step\n" +
@@ -28,7 +28,7 @@ const enhancedTutorialSteps = [
     title: "Canvas",
     content: "Great! Now drop your asset anywhere on the canvas. This will be your game character that players can interact with.",
     selector: "canvas",
-    position: { top: '40%', left: '50%' },
+    position: { top: '50%', left: '15%' },
     additionalContent: 
       "The canvas is where you build your game world.",
     autoAdvance: {
@@ -42,7 +42,7 @@ const enhancedTutorialSteps = [
     title: "Select Your Asset",
     content: "Now click on your character on the canvas to select it. This allows you to add behaviors and actions to make it interactive.",
     selector: ".canvas-container",
-    position: { top: '50%', left: '20%' },      
+    position: { top: '50%', left: '15%' },      
     additionalContent: 
       "Selected assets are highlighted with a teal border.",
     autoAdvance: {
@@ -105,7 +105,7 @@ const enhancedTutorialSteps = [
     id: 'congratulations',
     title: "Congratulations!",
     content: "You've created your first interactive game element! You can now add more assets and actions to build a complete game.",
-    position: { top: '50%', left: '50%' },
+    position: { top: '50%', left: '15%' },
     additionalContent:
       "What to try next:\n" +
       "• Add more characters with different behaviors\n" +
