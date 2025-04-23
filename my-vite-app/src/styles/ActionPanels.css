@@ -125,3 +125,121 @@
 .action-item {
   min-height: 32px;  
 }
+
+.action-item-buttons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+}
+
+.info-button {
+  background: none;
+  border: 1px solid #64ffda;
+  color: #64ffda;
+  font-size: 0.8rem;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.info-button:hover {
+  background-color: rgba(100, 255, 218, 0.1);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.info-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(10, 25, 47, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+  backdrop-filter: blur(3px);
+}
+
+.info-modal-content {
+  background-color: #112240;
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid #64ffda;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  color: #ccd6f6;
+}
+
+.info-modal-content h3 {
+  color: #64ffda;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+}
+
+.info-modal-content p {
+  margin-bottom: 0.8rem;
+  line-height: 1.6;
+}
+
+.info-modal-content strong {
+   color: #a8b2d1;
+}
+
+.info-modal-content a {
+  color: #64ffda;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.info-modal-content a:hover {
+  text-decoration: underline;
+}
+
+.info-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #a8b2d1;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 5px;
+  line-height: 1;
+}
+
+.info-modal-close:hover {
+  color: #64ffda;
+}
+
+.code-snippet-block {
+  background-color: #0a192f;
+  border: 1px solid #233554;
+  border-radius: 4px;
+  padding: 0.8rem 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word; 
+}
+
+.code-snippet-block code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  color: #8892b0;
+}
