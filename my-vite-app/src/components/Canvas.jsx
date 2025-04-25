@@ -72,8 +72,28 @@ function Canvas({
     const handleKeyDown = (e) => {
       if (!isPlaying) return;
       setGameState(prev => ({ ...prev, keyState: { ...prev.keyState, [e.code]: true } }));
-      if (e.code === 'Space') { e.preventDefault(); assetsRef.current.forEach(asset => { asset.actions?.forEach(action => { if (action.type === 'spacePress') { action.execute(asset, gameState); } }); }); }
-      if (e.code === 'ArrowUp') { assetsRef.current.forEach(asset => { asset.actions?.forEach(action => { if (action.type === 'keyPress') { action.execute(asset, gameState); } }); }); }
+      
+      if (e.code === 'Space') { 
+        e.preventDefault(); 
+        assetsRef.current.forEach(asset => { 
+          asset.actions?.forEach(action => { 
+            if (action.type === 'spacePress') { 
+              action.execute(asset, gameState); 
+            } 
+          }); 
+        }); 
+      }
+      
+      if (e.code === 'ArrowUp') { 
+        e.preventDefault();
+        assetsRef.current.forEach(asset => { 
+          asset.actions?.forEach(action => { 
+            if (action.type === 'keyPress') { 
+              action.execute(asset, gameState); 
+            } 
+          }); 
+        }); 
+      }
     };
     const handleKeyUp = (e) => {
       if (!isPlaying) return;
@@ -151,8 +171,26 @@ function Canvas({
     const y = e.clientY - rect.top;
 
     if (isPlaying) {
-        const clickedOnAsset = assets.some(asset => asset.containsPoint(x, y));
-        if (clickedOnAsset && typeof onAttemptSelectWhilePlaying === 'function') {
+        // Handle onClick actions - only for assets that were directly clicked
+        const clickedAsset = assets.find(asset => asset.containsPoint(x, y));
+        if (clickedAsset) {
+            clickedAsset.actions?.forEach(action => {
+                if (action.type === 'onClick') {
+                    action.execute(clickedAsset, gameState);
+                }
+            });
+        }
+        
+        // Execute mouseDown actions for ALL assets (when anywhere in canvas is clicked)
+        assets.forEach(asset => {
+            asset.actions?.forEach(action => {
+                if (action.type === 'mouseDown') {
+                    action.execute(asset, gameState);
+                }
+            });
+        });
+        
+        if (typeof onAttemptSelectWhilePlaying === 'function') {
             onAttemptSelectWhilePlaying();
         }
         return;

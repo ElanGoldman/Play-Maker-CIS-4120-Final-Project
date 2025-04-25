@@ -22,15 +22,15 @@ class Action {
   execute(asset, gameState) {
     console.log(`Executing ${this.type} -> ${this.behavior} on asset ${asset.name}`);
     
-    if (!this.enabled || this.isRunning) return false;
+    if (!this.enabled) return false;
+    
+    if (this.isRunning && (this.behavior === 'jump')) return false;
     
     // Have all behaviors in switch statement
     // TODO: make sure to add or remove more functionality for the actions
     switch (this.behavior) {
       case 'jump':
-        // Don't start a new jump if already jumping
-        if (this.isRunning) return false;
-        
+        // Set flag to prevent starting multiple jumps simultaneously
         this.isRunning = true;
         
         const height = this.parameters.height || 50;
@@ -92,6 +92,11 @@ class Action {
         const scale = this.parameters.scale || 1;
         asset.width = asset.width * scale;
         asset.height = asset.height * scale;
+        return true;
+        
+      case 'setVector':
+        asset.velocityX = this.parameters.x || 0;
+        asset.velocityY = this.parameters.y || 0;
         return true;
         
       default:

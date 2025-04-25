@@ -9,6 +9,15 @@ const MouseIcon = () => (
     <line x1="12" y1="7" x2="12" y2="11" />
   </svg>
 );
+
+const OnClickIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="6" y="3" width="12" height="18" rx="6" />
+    <circle cx="12" cy="9" r="2" fill="#64ffda" />
+    <line x1="12" y1="14" x2="12" y2="18" />
+  </svg>
+);
+
 const StartIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="5 3 19 12 5 21 5 3" fill="#64ffda" />
@@ -97,13 +106,19 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
   }, [selectedAsset, onOptionsVisibilityChange]);
 
   const actionTriggers = [
-    { id: 'mouseDown', name: 'Mouse Down', icon: <MouseIcon /> },
-    { id: 'onStart', name: 'On Start', icon: <StartIcon /> },
-    { id: 'keyPress', name: 'Press Up Arrow', icon: <ArrowUpIcon /> },
-    { id: 'spacePress', name: 'Press Space', icon: <SpacebarIcon /> }
+    { id: 'mouseDown', name: 'Mouse Down', icon: <MouseIcon />, description: 'Triggers when any mouse click happens in the canvas' },
+    { id: 'onStart', name: 'On Start', icon: <StartIcon />, description: 'Triggers when game starts' },
+    { id: 'keyPress', name: 'Arrow Jump', icon: <ArrowUpIcon />, description: 'Makes asset jump when Up Arrow key is pressed' },
+    { id: 'spacePress', name: 'Press Space', icon: <SpacebarIcon />, description: 'Triggers when Spacebar is pressed' },
+    { id: 'onClick', name: 'On Click', icon: <OnClickIcon />, description: 'Triggers when this asset is clicked' },
   ];
 
   const actionBehaviors = {
+    onClick: [
+      { id: 'jump', name: 'Jump', params: { height: 100 }, icon: <JumpIcon /> },
+      { id: 'changeSize', name: 'Change Size', params: { scale: 1.5 }, icon: <MoveIcon /> },
+      { id: 'setVector', name: 'Vector', params: { x: 0, y: -5 }, icon: <ArrowUpIcon /> }
+    ],
     mouseDown: [
       { id: 'jump', name: 'Jump', params: { height: 100 }, icon: <JumpIcon /> },
       { id: 'changeSize', name: 'Change Size', params: { scale: 1.5 }, icon: <MoveIcon /> },
@@ -115,10 +130,7 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
       { id: 'setPosition', name: 'Set Position', params: { x: 400, y: 300 }, icon: <MoveIcon /> }
     ],
     keyPress: [
-      { id: 'moveUp', name: 'Move Up', params: { distance: 10 }, icon: <ArrowUpIcon /> },
-      { id: 'moveDown', name: 'Move Down', params: { distance: 10 }, icon: <ArrowUpIcon /> },
-      { id: 'moveLeft', name: 'Move Left', params: { distance: 10 }, icon: <MoveIcon /> },
-      { id: 'moveRight', name: 'Move Right', params: { distance: 10 }, icon: <MoveIcon /> }
+      { id: 'jump', name: 'Jump', params: { height: 70, duration: 800 }, icon: <JumpIcon /> }
     ],
     spacePress: [
       { id: 'jump', name: 'Jump', params: { height: 50, duration: 1000 }, icon: <JumpIcon /> }
@@ -201,6 +213,7 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
             key={trigger.id}
             className="action-trigger-button"
             onClick={() => handleTriggerSelect(trigger)}
+            title={trigger.description}
           >
             <div className="action-icon">{trigger.icon}</div>
             <span className="action-name">{trigger.name}</span>
