@@ -2,7 +2,7 @@ class Action {
   constructor(options = {}) {
     this.id = options.id || `action-${Date.now()}`;
     this.type = options.type || ''; // e.x. 'spacePress'
-    this.behavior = options.behavior || ''; // e.x. 'jump'
+    this.behavior = options.behavior || ''; // e.x. 'jump', 'setVector', etc.
     this.parameters = options.parameters || {}; 
     this.enabled = options.enabled !== undefined ? options.enabled : true;
     this.isRunning = false;
@@ -24,10 +24,10 @@ class Action {
     
     if (!this.enabled) return false;
     
+    // For jump actions, prevent starting multiple jumps simultaneously
     if (this.isRunning && (this.behavior === 'jump')) return false;
     
-    // Have all behaviors in switch statement
-    // TODO: make sure to add or remove more functionality for the actions
+    // Handle all behaviors in switch statement
     switch (this.behavior) {
       case 'jump':
         // Set flag to prevent starting multiple jumps simultaneously
@@ -95,8 +95,18 @@ class Action {
         return true;
         
       case 'setVector':
-        asset.velocityX = this.parameters.x || 0;
-        asset.velocityY = this.parameters.y || 0;
+        // Set velocity based on parameters
+        if (this.parameters.x !== undefined) {
+          asset.velocityX = this.parameters.x || 0;
+        }
+        if (this.parameters.y !== undefined) {
+          asset.velocityY = this.parameters.y || 0;
+        }
+        
+        // Apply immediate movement based on velocity
+        asset.x += asset.velocityX;
+        asset.y += asset.velocityY;
+        
         return true;
         
       default:

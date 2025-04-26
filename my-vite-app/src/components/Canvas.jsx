@@ -68,51 +68,93 @@ function Canvas({
     });
   };
 
+  // Process all active key actions at one time
+  const processKeyActions = () => {
+    if (!isPlaying) return;
+    
+    // Map of key codes to action types
+    const keyActionMap = {
+      'Space': 'spacePress',
+      'ArrowUp': 'keyPress',
+      'ArrowDown': 'keyPressDown',
+      'ArrowLeft': 'keyPressLeft',
+      'ArrowRight': 'keyPressRight'
+    };
+    
+    // Process all currently pressed keys
+    Object.entries(gameState.keyState).forEach(([keyCode, isPressed]) => {
+      if (isPressed && keyActionMap[keyCode]) {
+        const actionType = keyActionMap[keyCode];
+        
+        assetsRef.current.forEach(asset => {
+          asset.actions?.forEach(action => {
+            if (action.type === actionType) {
+              action.execute(asset, gameState);
+            }
+          });
+        });
+      }
+    });
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isPlaying) return;
-      setGameState(prev => ({ ...prev, keyState: { ...prev.keyState, [e.code]: true } }));
       
-      if (e.code === 'Space') { 
-        e.preventDefault(); 
-        assetsRef.current.forEach(asset => { 
-          asset.actions?.forEach(action => { 
-            if (action.type === 'spacePress') { 
-              action.execute(asset, gameState); 
-            } 
-          }); 
-        }); 
-      }
-      
-      if (e.code === 'ArrowUp') { 
+      // Prevent default key behaviors like moving the site
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
-        assetsRef.current.forEach(asset => { 
-          asset.actions?.forEach(action => { 
-            if (action.type === 'keyPress') { 
-              action.execute(asset, gameState); 
-            } 
-          }); 
-        }); 
       }
+      
+      // Update key state
+      setGameState(prev => ({
+        ...prev,
+        keyState: { ...prev.keyState, [e.code]: true }
+      }));
     };
+    
     const handleKeyUp = (e) => {
       if (!isPlaying) return;
-      setGameState(prev => { const newKeyState = { ...prev.keyState }; delete newKeyState[e.code]; return { ...prev, keyState: newKeyState }; });
+      setGameState(prev => {
+        const newKeyState = { ...prev.keyState };
+        delete newKeyState[e.code];
+        return { ...prev, keyState: newKeyState };
+      });
     };
 
     if (isPlaying) {
       window.addEventListener('keydown', handleKeyDown);
       window.addEventListener('keyup', handleKeyUp);
-      assetsRef.current.forEach(asset => { asset.actions?.forEach(action => { if (action.type === 'onStart') { action.execute(asset, gameState); } }); });
+      
+      // Initialize onStart actions
+      assetsRef.current.forEach(asset => {
+        asset.actions?.forEach(action => {
+          if (action.type === 'onStart') {
+            action.execute(asset, gameState);
+          }
+        });
+      });
+      
+      // Set up game loop
       let animationFrameId;
       const gameLoop = (timestamp) => {
         const deltaTime = timestamp - gameState.lastTimestamp;
         setGameState(prev => ({ ...prev, lastTimestamp: timestamp }));
+        
+        // Process all key actions in every frame
+        processKeyActions();
+        
         forceRedrawAssets();
         animationFrameId = requestAnimationFrame(gameLoop);
       };
+      
       animationFrameId = requestAnimationFrame(gameLoop);
-      return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('keyup', handleKeyUp); cancelAnimationFrame(animationFrameId); };
+      
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+        cancelAnimationFrame(animationFrameId);
+      };
     }
   }, [isPlaying, gameState.lastTimestamp]);
 

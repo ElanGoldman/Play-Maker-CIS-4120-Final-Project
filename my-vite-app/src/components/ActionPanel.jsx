@@ -29,6 +29,24 @@ const ArrowUpIcon = () => (
     <polyline points="5 12 12 5 19 12" />
   </svg>
 );
+const ArrowDownIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <polyline points="19 12 12 19 5 12" />
+  </svg>
+);
+const ArrowLeftIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 5 5 12 12 19" />
+  </svg>
+);
+const ArrowRightIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 19 19 12 12 5" />
+  </svg>
+);
 const SpacebarIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="4" y="9" width="16" height="6" rx="2" />
@@ -108,9 +126,12 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
   const actionTriggers = [
     { id: 'mouseDown', name: 'Mouse Down', icon: <MouseIcon />, description: 'Triggers when any mouse click happens in the canvas' },
     { id: 'onStart', name: 'On Start', icon: <StartIcon />, description: 'Triggers when game starts' },
-    { id: 'keyPress', name: 'Arrow Jump', icon: <ArrowUpIcon />, description: 'Makes asset jump when Up Arrow key is pressed' },
-    { id: 'spacePress', name: 'Press Space', icon: <SpacebarIcon />, description: 'Triggers when Spacebar is pressed' },
     { id: 'onClick', name: 'On Click', icon: <OnClickIcon />, description: 'Triggers when this asset is clicked' },
+    { id: 'spacePress', name: 'Press Space', icon: <SpacebarIcon />, description: 'Triggers when Spacebar is pressed' },
+    { id: 'keyPress', name: 'Arrow Up', icon: <ArrowUpIcon />, description: 'Triggers when Up Arrow key is pressed' },
+    { id: 'keyPressDown', name: 'Arrow Down', icon: <ArrowDownIcon />, description: 'Triggers when Down Arrow key is pressed' },
+    { id: 'keyPressLeft', name: 'Arrow Left', icon: <ArrowLeftIcon />, description: 'Triggers when Left Arrow key is pressed' },
+    { id: 'keyPressRight', name: 'Arrow Right', icon: <ArrowRightIcon />, description: 'Triggers when Right Arrow key is pressed' },
   ];
 
   const actionBehaviors = {
@@ -130,7 +151,17 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
       { id: 'setPosition', name: 'Set Position', params: { x: 400, y: 300 }, icon: <MoveIcon /> }
     ],
     keyPress: [
-      { id: 'jump', name: 'Jump', params: { height: 70, duration: 800 }, icon: <JumpIcon /> }
+      { id: 'jump', name: 'Jump', params: { height: 70, duration: 800 }, icon: <JumpIcon /> },
+      { id: 'setVector', name: 'Vector Up', params: { x: 0, y: -5 }, icon: <ArrowUpIcon /> }
+    ],
+    keyPressDown: [
+      { id: 'setVector', name: 'Vector Down', params: { x: 0, y: 5 }, icon: <ArrowDownIcon /> }
+    ],
+    keyPressLeft: [
+      { id: 'setVector', name: 'Vector Left', params: { x: -5, y: 0 }, icon: <ArrowLeftIcon /> }
+    ],
+    keyPressRight: [
+      { id: 'setVector', name: 'Vector Right', params: { x: 5, y: 0 }, icon: <ArrowRightIcon /> }
     ],
     spacePress: [
       { id: 'jump', name: 'Jump', params: { height: 50, duration: 1000 }, icon: <JumpIcon /> }
