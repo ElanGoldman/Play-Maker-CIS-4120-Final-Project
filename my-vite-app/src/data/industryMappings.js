@@ -20,6 +20,30 @@ export const industryMappings = {
       keywords: ["OnMouseDown", "Collider", "Rigidbody", "AddForce", "Vector", "Push"],
       link: "https://docs.unity3d.com/ScriptReference/Rigidbody.AddForce.html"
     },
+  'mouseDown_teleport': {
+    engine: 'Unity',
+    title: "Teleporting Objects to Mouse Position",
+    description: "This function instantly moves the object to the position where the user clicks the mouse. In Unity, you'd use Input.GetMouseButtonDown to detect clicks, then convert mouse screen position to world position using Camera.ScreenToWorldPoint, and finally set the object's transform.position to that location.",
+    keywords: ["Mouse Click", "Input", "Transform", "Position", "Teleport", "ScreenToWorldPoint"],
+    link: "https://docs.unity3d.com/ScriptReference/Camera.ScreenToWorldPoint.html",
+    codeSnippet: `
+    void Update()
+    {
+        // Check if the mouse button was pressed
+        if (Input.GetMouseButtonDown(0))
+        {
+            // Get mouse position in screen space
+            Vector3 mousePos = Input.mousePosition;
+            
+            // Convert to world position
+            mousePos.z = Camera.main.nearClipPlane;
+            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(mousePos);
+            
+            // Set the object's position (keeping its Z position)
+            transform.position = new Vector3(worldPosition.x, worldPosition.y, transform.position.z);
+        }
+    }`
+  },
   'mouseDown_jump': {
     engine: 'Unity',
     title: "Making Objects Jump on Any Mouse Click",
@@ -27,34 +51,64 @@ export const industryMappings = {
     keywords: ["Mouse Click", "Input", "Rigidbody", "AddForce", "Jump", "Update loop"],
     link: "https://docs.unity3d.com/ScriptReference/Input.GetMouseButtonDown.html"
   },
-  'mouseDown_changeSize': {
+  'onStart_fadeIn': {
     engine: 'Unity',
-    title: "Changing Object Size on Any Mouse Click",
-    description: "Similar to jumping, you'd check for a mouse click anywhere in the game window. When any click occurs, you would directly change the object's 'scale' property to make it bigger or smaller, regardless of whether the player clicked on the object itself.",
-    keywords: ["Mouse Click", "Input", "Scale", "Transform", "Update loop"],
-    link: "https://docs.unity3d.com/ScriptReference/Transform-localScale.html"
+    title: "Fading In an Object When Game Starts",
+    description: "This effect gradually makes an object appear by increasing its opacity from 0 (invisible) to 1 (fully visible). In Unity, you would use the CanvasGroup component or modify the alpha channel of the material/sprite renderer in the Start() function with a coroutine that gradually changes the transparency over time.",
+    keywords: ["Start", "Awake", "Coroutine", "Lerp", "Alpha", "Transparency", "CanvasGroup", "Fade"],
+    link: "https://docs.unity3d.com/ScriptReference/CanvasGroup-alpha.html",
+    codeSnippet: `
+    using UnityEngine;
+    using System.Collections;
+
+    public class FadeInEffect : MonoBehaviour
+    {
+        public float fadeDuration = 1.0f;
+        
+        void Start()
+        {
+            // Start invisible
+            SetAlpha(0);
+            
+            // Begin fade-in effect
+            StartCoroutine(FadeIn());
+        }
+        
+        IEnumerator FadeIn()
+        {
+            float startTime = Time.time;
+            
+            while (Time.time < startTime + fadeDuration)
+            {
+                float t = (Time.time - startTime) / fadeDuration;
+                SetAlpha(t);
+                yield return null;
+            }
+            
+            // Ensure we end at full opacity
+            SetAlpha(1);
+        }
+        
+        void SetAlpha(float alpha)
+        {
+            // For a Sprite Renderer
+            SpriteRenderer renderer = GetComponent<SpriteRenderer>();
+            if (renderer != null)
+            {
+                Color color = renderer.color;
+                color.a = alpha;
+                renderer.color = color;
+            }
+            
+            // For a Canvas Group
+            CanvasGroup canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = alpha;
+            }
+        }
+    }`
   },
-  'mouseDown_setVector': {
-      engine: 'Unity',
-      title: "Pushing Objects on Any Mouse Click",
-      description: "After detecting any mouse click in your game window, you can give objects a push. This is usually done by telling their physics component ('Rigidbody') to add a force in a specific direction. This happens regardless of where the player clicks.",
-      keywords: ["Mouse Click", "Input", "Rigidbody", "AddForce", "Vector", "Push", "Update loop"],
-      link: "https://docs.unity3d.com/ScriptReference/Rigidbody.AddForce.html"
-    },
-  'onStart_move': {
-    engine: 'Unity',
-    title: "Making an Object Move Automatically",
-    description: "To make an object move on its own when the game starts, you'd typically give it instructions in a special 'Start' or 'Awake' function in your code. Then, you might continuously tell its physics component ('Rigidbody') to apply force or maintain a certain speed in another function that runs every physics step ('FixedUpdate').",
-    keywords: ["Start", "Awake", "FixedUpdate", "Rigidbody", "Velocity", "AddForce", "Continuous Movement"],
-    link: "https://docs.unity3d.com/ScriptReference/Rigidbody.AddForce.html"
-  },
-   'onStart_setPosition': {
-     engine: 'Unity',
-     title: "Placing an Object at the Start",
-     description: "When the game begins, you can place an object exactly where you want it using code. In a 'Start' or 'Awake' function, you simply set the object's 'position' property to the desired coordinates (X, Y, Z).",
-     keywords: ["Start", "Awake", "Position", "Transform", "Coordinates", "Vector3"],
-     link: "https://docs.unity3d.com/ScriptReference/Transform-position.html"
-   },
   'keyPress_jump': {
     engine: 'Unity',
     title: "Making an Object Jump with Up Arrow Key",
@@ -62,25 +116,25 @@ export const industryMappings = {
     keywords: ["Key Press", "Up Arrow", "Input", "Rigidbody", "AddForce", "Impulse", "Jump", "Update loop"],
     link: "https://docs.unity3d.com/ScriptReference/Input.GetKeyDown.html",
     codeSnippet: `
-public float jumpForce = 5f;
-private bool canJump = true;
+    public float jumpForce = 5f;
+    private bool canJump = true;
 
-void Update()
-{
-    // Check if the Up Arrow key was just pressed and can jump
-    if (Input.GetKeyDown(KeyCode.UpArrow) && canJump)
+    void Update()
     {
-        // Add upward force to make the object jump
-        GetComponent<Rigidbody>().AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        canJump = false;
-        Invoke("ResetJump", 1.0f); // Allow jumping again after 1 second
+        // Check if the Up Arrow key was just pressed and can jump
+        if (Input.GetKeyDown(KeyCode.UpArrow) && canJump)
+        {
+            // Add upward force to make the object jump
+            GetComponent<Rigidbody>().AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            canJump = false;
+            Invoke("ResetJump", 1.0f); // Allow jumping again after 1 second
+        }
     }
-}
 
-void ResetJump()
-{
-    canJump = true;
-}`
+    void ResetJump()
+    {
+        canJump = true;
+    }`
   },
   'spacePress_jump': {
     engine: 'Unity',

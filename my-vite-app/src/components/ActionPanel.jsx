@@ -70,6 +70,18 @@ const MoveIcon = () => (
     <path d="M12 2v20" />
   </svg>
 );
+const FadeIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2v4" />
+    <path d="M12 18v4" />
+    <path d="M4.93 4.93l2.83 2.83" />
+    <path d="M16.24 16.24l2.83 2.83" />
+    <path d="M2 12h4" />
+    <path d="M18 12h4" />
+    <path d="M4.93 19.07l2.83-2.83" />
+    <path d="M16.24 7.76l2.83-2.83" />
+  </svg>
+);
 
 const InfoModal = ({ data, onClose }) => {
   if (!data) return null;
@@ -138,21 +150,17 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
     onClick: [
       { id: 'jump', name: 'Jump', params: { height: 100 }, icon: <JumpIcon /> },
       { id: 'changeSize', name: 'Change Size', params: { scale: 1.5 }, icon: <MoveIcon /> },
-      { id: 'setVector', name: 'Vector', params: { x: 0, y: -5 }, icon: <ArrowUpIcon /> }
     ],
     mouseDown: [
-      { id: 'jump', name: 'Jump', params: { height: 100 }, icon: <JumpIcon /> },
-      { id: 'changeSize', name: 'Change Size', params: { scale: 1.5 }, icon: <MoveIcon /> },
-      { id: 'setVector', name: 'Vector', params: { x: 0, y: -5 }, icon: <ArrowUpIcon /> }
+      { id: 'teleport', name: 'Teleport', params: {}, icon: <MoveIcon /> },
+      { id: 'jump', name: 'Jump', params: { height: 100 }, icon: <JumpIcon /> }
     ],
     onStart: [
-      { id: 'move', name: 'Move', params: { x: 10, y: 0 }, icon: <MoveIcon /> },
-      { id: 'playSound', name: 'Play Sound', params: { sound: 'pop' }, icon: <StartIcon /> },
-      { id: 'setPosition', name: 'Set Position', params: { x: 400, y: 300 }, icon: <MoveIcon /> }
+      { id: 'fadeIn', name: 'Fade In', params: { duration: 1000 }, icon: <FadeIcon /> }
     ],
     keyPress: [
+      { id: 'setVector', name: 'Vector Up', params: { x: 0, y: -5 }, icon: <ArrowUpIcon /> },
       { id: 'jump', name: 'Jump', params: { height: 70, duration: 800 }, icon: <JumpIcon /> },
-      { id: 'setVector', name: 'Vector Up', params: { x: 0, y: -5 }, icon: <ArrowUpIcon /> }
     ],
     keyPressDown: [
       { id: 'setVector', name: 'Vector Down', params: { x: 0, y: 5 }, icon: <ArrowDownIcon /> }

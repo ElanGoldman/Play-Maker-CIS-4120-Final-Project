@@ -6,6 +6,7 @@ class Action {
     this.parameters = options.parameters || {}; 
     this.enabled = options.enabled !== undefined ? options.enabled : true;
     this.isRunning = false;
+    this.animationFrameId = null; // Store animation frame ID for cancellation
   }
 
   setEnabled(enabled) {
@@ -24,8 +25,8 @@ class Action {
     
     if (!this.enabled) return false;
     
-    // For jump actions, prevent starting multiple jumps simultaneously
-    if (this.isRunning && (this.behavior === 'jump')) return false;
+    // For animations, prevent starting multiple instances simultaneously
+    if (this.isRunning && (this.behavior === 'jump' || this.behavior === 'fadeIn')) return false;
     
     // Handle all behaviors in switch statement
     switch (this.behavior) {
@@ -37,7 +38,7 @@ class Action {
         const duration = this.parameters.duration || 2000;
         
         const originalY = asset.y;
-        const startTime = Date.now(); //timed jump
+        const startTime = Date.now();
         
         // Create animation function
         const animate = () => {
@@ -50,22 +51,33 @@ class Action {
           
           // Continue animation if not done
           if (progress < 1) {
-            requestAnimationFrame(animate);
+            this.animationFrameId = requestAnimationFrame(animate);
           } else {
             // Reset position and flag when done
             asset.y = originalY;
             this.isRunning = false;
+            this.animationFrameId = null;
           }
         };
         
         // Start the animation
-        requestAnimationFrame(animate);
+        this.animationFrameId = requestAnimationFrame(animate);
         return true;
         
       case 'move':
         asset.x += this.parameters.x || 0;
         asset.y += this.parameters.y || 0;
         return true;
+        
+      case 'teleport':
+        // Get the mouse position from gameState
+        if (gameState && gameState.mousePosition) {
+          // Teleport the asset to the mouse position, centering it on the mouse
+          asset.x = gameState.mousePosition.x - (asset.width / 2);
+          asset.y = gameState.mousePosition.y - (asset.height / 2);
+          return true;
+        }
+        return false;
         
       case 'moveUp':
         asset.y -= this.parameters.distance || 10;
@@ -109,10 +121,57 @@ class Action {
         
         return true;
         
+      case 'fadeIn':
+        // Set flag to prevent starting multiple fade animations simultaneously
+        this.isRunning = true;
+        
+        const fadeDuration = this.parameters.duration || 1000;
+        const fadeStartTime = Date.now();
+        
+        // Store original opacity if not already set
+        if (asset.opacity === undefined) {
+          asset.opacity = 0;
+        } else {
+          // Start from current opacity
+          asset.opacity = 0;
+        }
+        
+        // Create animation function for fade in
+        const animateFade = () => {
+          const currentTime = Date.now();
+          const elapsed = currentTime - fadeStartTime;
+          const fadeProgress = Math.min(elapsed / fadeDuration, 1);
+          
+          asset.opacity = fadeProgress;
+          
+          if (fadeProgress < 1) {
+            this.animationFrameId = requestAnimationFrame(animateFade);
+          } else {
+            // Set final opacity and flag when done
+            asset.opacity = 1;
+            this.isRunning = false;
+            this.animationFrameId = null;
+          }
+        };
+        
+        // Start the fade animation
+        this.animationFrameId = requestAnimationFrame(animateFade);
+        return true;
+        
       default:
         console.warn(`Unknown behavior: ${this.behavior}`);
         return false;
     }
+  }
+
+  // Stop any running animations
+  cleanup() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    
+    this.isRunning = false;
   }
 
   // Create a copy of this action

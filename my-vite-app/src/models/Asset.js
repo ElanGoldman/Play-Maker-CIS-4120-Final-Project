@@ -26,6 +26,9 @@ class Asset {
     
     // Resizing state
     this.isResizing = false;
+
+    // Visual properties
+    this.opacity = options.opacity !== undefined ? options.opacity : 1; // Default to fully opaque
   }
 
   // Add a new action to this asset
@@ -85,6 +88,33 @@ class Asset {
     }
     
     return this;
+  }
+
+  // Set opacity
+  setOpacity(value) {
+    this.opacity = Math.max(0, Math.min(1, value)); // Ensure value is between 0 and 1
+    return this;
+  }
+  
+  // Fade in over time
+  fadeIn(duration = 5000, callback) {
+    this.opacity = 0;
+    const startTime = Date.now();
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      this.opacity = progress;
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        this.opacity = 1;
+        if (typeof callback === 'function') {
+          callback();
+        }
+      }
+    }
   }
   
   // Handle animation update
