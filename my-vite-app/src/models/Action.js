@@ -20,9 +20,7 @@ class Action {
   }
 
   // Execute the action
-  execute(asset, gameState) {
-    console.log(`Executing ${this.type} -> ${this.behavior} on asset ${asset.name}`);
-    
+  execute(asset, gameState) {    
     if (!this.enabled) return false;
     
     // For animations, prevent starting multiple instances simultaneously
@@ -30,14 +28,14 @@ class Action {
     
     // Handle all behaviors in switch statement
     switch (this.behavior) {
-      case 'jump':
+      case 'jump': {
         // Set flag to prevent starting multiple jumps simultaneously
         this.isRunning = true;
         
         const height = this.parameters.height || 50;
         const duration = this.parameters.duration || 2000;
         
-        const originalY = asset.y;
+        const jumpOriginalY = asset.y;
         const startTime = Date.now();
         
         // Create animation function
@@ -47,26 +45,60 @@ class Action {
           const progress = Math.min(elapsedTime / duration, 1);
           const jumpOffset = Math.sin(Math.PI * progress) * height;
           
-          asset.y = originalY - jumpOffset;
+          // Store original Y position
+          const originalY = asset.y;
+          
+          // Calculate new position
+          const newY = jumpOriginalY - jumpOffset;
+          
+          // Only move if we're not colliding
+          if (!asset.hasCollision || !asset.isCollidingAbove) {
+            asset.y = newY;
+          } else {
+            // If collision happened in upward direction, reset jump
+            if (newY < originalY) {
+              this.isRunning = false;
+              this.animationFrameId = null;
+              return;
+            }
+          }
+          
+          asset.isAnimating = true;
           
           // Continue animation if not done
           if (progress < 1) {
             this.animationFrameId = requestAnimationFrame(animate);
           } else {
             // Reset position and flag when done
-            asset.y = originalY;
+            asset.y = jumpOriginalY;
             this.isRunning = false;
             this.animationFrameId = null;
+            asset.isAnimating = false;
           }
         };
         
         // Start the animation
         this.animationFrameId = requestAnimationFrame(animate);
         return true;
+      }
         
       case 'move':
-        asset.x += this.parameters.x || 0;
-        asset.y += this.parameters.y || 0;
+        const moveX = this.parameters.x || 0;
+        const moveY = this.parameters.y || 0;
+        
+        const origX = asset.x;
+        const origY = asset.y;
+        
+        asset.x += moveX;
+        asset.y += moveY;
+        
+        // If asset has collision, check if the move is valid
+        if (asset.hasCollision && (asset.isColliding || asset.isCollidingWithCanvas)) {
+          // If collision, revert to original position
+          asset.x = origX;
+          asset.y = origY;
+        }
+        
         return true;
         
       case 'teleport':
@@ -80,33 +112,53 @@ class Action {
         return false;
         
       case 'moveUp':
-        asset.y -= this.parameters.distance || 10;
+        if (!asset.hasCollision || !asset.isCollidingAbove) {
+          asset.y -= this.parameters.distance || 10;
+        }
         return true;
         
       case 'moveDown':
-        asset.y += this.parameters.distance || 10;
+        if (!asset.hasCollision || !asset.isCollidingBelow) {
+          asset.y += this.parameters.distance || 10;
+        }
         return true;
         
       case 'moveLeft':
-        asset.x -= this.parameters.distance || 10;
+        if (!asset.hasCollision || !asset.isCollidingLeft) {
+          asset.x -= this.parameters.distance || 10;
+        }
         return true;
         
       case 'moveRight':
-        asset.x += this.parameters.distance || 10;
+        if (!asset.hasCollision || !asset.isCollidingRight) {
+          asset.x += this.parameters.distance || 10;
+        }
         return true;
         
       case 'setPosition':
+        const originalX = asset.x;
+        const originalY = asset.y;
+        
         asset.x = this.parameters.x !== undefined ? this.parameters.x : asset.x;
         asset.y = this.parameters.y !== undefined ? this.parameters.y : asset.y;
+        
+        // If asset has collision and is now colliding, revert
+        if (asset.hasCollision && (asset.isColliding || asset.isCollidingWithCanvas)) {
+          asset.x = originalX;
+          asset.y = originalY;
+        }
+        
         return true;
         
-      case 'changeSize':
+      case 'changeSize': {
         const scale = this.parameters.scale || 1;
         asset.width = asset.width * scale;
         asset.height = asset.height * scale;
         return true;
+      }
+
+      case 'setVector': {
         
-      case 'setVector':
         // Set velocity based on parameters
         if (this.parameters.x !== undefined) {
           asset.velocityX = this.parameters.x || 0;
@@ -115,13 +167,11 @@ class Action {
           asset.velocityY = this.parameters.y || 0;
         }
         
-        // Apply immediate movement based on velocity
-        asset.x += asset.velocityX;
-        asset.y += asset.velocityY;
         
         return true;
+      }
         
-      case 'fadeIn':
+      case 'fadeIn': {
         // Set flag to prevent starting multiple fade animations simultaneously
         this.isRunning = true;
         
@@ -157,7 +207,14 @@ class Action {
         // Start the fade animation
         this.animationFrameId = requestAnimationFrame(animateFade);
         return true;
+      }
         
+      case 'enableCollision':
+        // Enable collision detection for the asset
+        console.log(`Enabling collision for ${asset.name}`);
+        asset.hasCollision = true;
+        return true;
+                
       default:
         console.warn(`Unknown behavior: ${this.behavior}`);
         return false;

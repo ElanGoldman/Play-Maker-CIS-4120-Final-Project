@@ -142,7 +142,34 @@ export const industryMappings = {
     description: "Similar to clicking, your code would check in its 'Update' loop if the player just pressed the Spacebar. If they did, you tell the object's physics component ('Rigidbody') to add a sudden upward force (an 'impulse'), causing it to jump.",
     keywords: ["Key Press", "Spacebar", "Input", "Rigidbody", "AddForce", "Impulse", "Jump", "Update loop"],
     link: "https://docs.unity3d.com/ScriptReference/Input.GetKeyDown.html"
-  }
+  },
+  'onStart_enableCollision': {
+    engine: 'Unity',
+    title: "Enable Collision Detection at Game Start",
+    description: "This action adds a rigid body and collider to a game object when the game starts, allowing it to participate in Unity's built-in physics and collision detection system. Objects with collision enabled will automatically interact with other colliders in the scene.",
+    keywords: ["Rigidbody", "Collider", "Physics", "Start", "Awake", "Collision Detection"],
+    link: "https://docs.unity3d.com/ScriptReference/Rigidbody.html",
+    codeSnippet: `
+    void Start()
+    {
+        // Make sure we have a collider component
+        if (GetComponent<Collider>() == null)
+        {
+            // Add a box collider that matches this object's size
+            BoxCollider collider = gameObject.AddComponent<BoxCollider>();
+            collider.size = GetComponent<Renderer>().bounds.size;
+        }
+        
+        // Make sure we have a rigidbody for physics
+        if (GetComponent<Rigidbody>() == null)
+        {
+            Rigidbody rb = gameObject.AddComponent<Rigidbody>();
+            // Configure the rigidbody as needed
+            rb.useGravity = true;
+            rb.isKinematic = false;
+        }
+    }`
+  },
 };
 
 export const getIndustryInfo = (triggerType, behaviorId) => {

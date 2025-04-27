@@ -29,6 +29,17 @@ class Asset {
 
     // Visual properties
     this.opacity = options.opacity !== undefined ? options.opacity : 1; // Default to fully opaque
+    
+    // Collision properties
+    this.hasCollision = options.hasCollision !== undefined ? options.hasCollision : false;
+    this.collidingWith = new Set(); // Track which assets this is colliding with
+    
+    // Directional collision flags
+    this.isCollidingAbove = false;
+    this.isCollidingBelow = false;
+    this.isCollidingLeft = false;
+    this.isCollidingRight = false;
+    this.isCollidingWithCanvas = false;
   }
 
   // Add a new action to this asset
@@ -117,6 +128,105 @@ class Asset {
     }
   }
   
+  // Check if this asset is colliding with another asset
+  isCollidingWith(otherAsset) {
+    return (
+      this.x < otherAsset.x + otherAsset.width &&
+      this.x + this.width > otherAsset.x &&
+      this.y < otherAsset.y + otherAsset.height &&
+      this.y + this.height > otherAsset.y
+    );
+  }
+  
+  // Determine the side of collision with another asset
+  getCollisionSide(otherAsset) {
+    const thisCenter = {
+      x: this.x + this.width / 2,
+      y: this.y + this.height / 2
+    };
+    
+    const otherCenter = {
+      x: otherAsset.x + otherAsset.width / 2,
+      y: otherAsset.y + otherAsset.height / 2
+    };
+    
+    // Calculate overlap
+    const overlapX = (this.width / 2 + otherAsset.width / 2) - Math.abs(thisCenter.x - otherCenter.x);
+    const overlapY = (this.height / 2 + otherAsset.height / 2) - Math.abs(thisCenter.y - otherCenter.y);
+    
+    // Determine collision side based on smallest overlap and centers
+    if (overlapX < overlapY) {
+      // Horizontal collision (left or right)
+      return thisCenter.x < otherCenter.x ? 'right' : 'left';
+    } else {
+      // Vertical collision (top or bottom)
+      return thisCenter.y < otherCenter.y ? 'bottom' : 'top';
+    }
+  }
+  
+  // Check collision with canvas boundaries
+  checkCanvasBoundary(canvasWidth, canvasHeight) {
+    const isColliding = (
+      this.x < 0 ||
+      this.y < 0 ||
+      this.x + this.width > canvasWidth ||
+      this.y + this.height > canvasHeight
+    );
+    
+    this.isCollidingWithCanvas = isColliding;
+    
+    // Set directional flags for canvas collision
+    this.isCollidingLeft = this.x < 0;
+    this.isCollidingRight = this.x + this.width > canvasWidth;
+    this.isCollidingAbove = this.y < 0;
+    this.isCollidingBelow = this.y + this.height > canvasHeight;
+    
+    return isColliding;
+  }
+  
+  // Update directional collision flags based on collisions with other assets
+  updateDirectionalCollisionFlags(otherAssets) {
+    // Reset directional flags first
+    this.isCollidingAbove = false;
+    this.isCollidingBelow = false;
+    this.isCollidingLeft = false;
+    this.isCollidingRight = false;
+    
+    // Only check if collision is enabled
+    if (!this.hasCollision) return;
+    
+    // Check against all other assets with collision enabled
+    otherAssets.forEach(otherAsset => {
+      if (otherAsset.canvasId === this.canvasId || !otherAsset.hasCollision) return;
+      
+      if (this.isCollidingWith(otherAsset)) {
+        // Determine the side of collision
+        const side = this.getCollisionSide(otherAsset);
+        
+        // Update directional flags
+        switch (side) {
+          case 'top':
+            this.isCollidingAbove = true;
+            break;
+          case 'bottom':
+            this.isCollidingBelow = true;
+            break;
+          case 'left':
+            this.isCollidingLeft = true;
+            break;
+          case 'right':
+            this.isCollidingRight = true;
+            break;
+        }
+      }
+    });
+  }
+  
+  // Compute if this asset is colliding with any other assets
+  get isColliding() {
+    return this.collidingWith.size > 0;
+  }
+  
   // Handle animation update
   update(deltaTime) {
     // Update velocity based on acceleration
@@ -157,7 +267,8 @@ class Asset {
       actions: [...this.actions], // Clone the actions array
       properties: {...this.properties}, // Clone the properties object
       originalWidth: this.originalWidth,
-      originalHeight: this.originalHeight
+      originalHeight: this.originalHeight,
+      hasCollision: this.hasCollision
     });
   }
 
@@ -176,7 +287,8 @@ class Asset {
       originalWidth: this.originalWidth,
       originalHeight: this.originalHeight,
       actions: this.actions,
-      properties: this.properties
+      properties: this.properties,
+      hasCollision: this.hasCollision
     };
   }
 

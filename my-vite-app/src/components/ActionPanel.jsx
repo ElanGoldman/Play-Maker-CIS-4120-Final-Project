@@ -82,6 +82,14 @@ const FadeIcon = () => (
     <path d="M16.24 7.76l2.83-2.83" />
   </svg>
 );
+const CollisionIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" />
+    <rect x="14" y="3" width="7" height="7" />
+    <rect x="14" y="14" width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
+  </svg>
+);
 
 const InfoModal = ({ data, onClose }) => {
   if (!data) return null;
@@ -156,7 +164,8 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
       { id: 'jump', name: 'Jump', params: { height: 100 }, icon: <JumpIcon /> }
     ],
     onStart: [
-      { id: 'fadeIn', name: 'Fade In', params: { duration: 1000 }, icon: <FadeIcon /> }
+      { id: 'fadeIn', name: 'Fade In', params: { duration: 1000 }, icon: <FadeIcon /> },
+      { id: 'enableCollision', name: 'Enable Collision', params: {}, icon: <CollisionIcon /> }
     ],
     keyPress: [
       { id: 'setVector', name: 'Vector Up', params: { x: 0, y: -5 }, icon: <ArrowUpIcon /> },
@@ -315,6 +324,13 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
                   </div>
                 );
               })}
+            </div>
+          )}
+          
+          {/* Display collision status */}
+          {selectedAsset.hasCollision && (
+            <div className="collision-status">
+              <CollisionIcon /> Collision Active
             </div>
           )}
         </div>

@@ -132,30 +132,59 @@ function EditorPage() {
 
   const handleAddAction = (action) => {
     if (!selectedAssetId) return;
+    
     const actionInstance = action instanceof Action ? action : new Action(action);
+    console.log(`Adding action: ${actionInstance.type} -> ${actionInstance.behavior} to asset ${selectedAssetId}`);
+    
     let actionAdded = false;
     setCanvasAssets(prevAssets => {
       const assetIndex = prevAssets.findIndex(asset => asset.canvasId === selectedAssetId);
       if (assetIndex === -1) return prevAssets;
+      
       const assetToUpdate = prevAssets[assetIndex];
-      const actionExists = assetToUpdate.actions.some(existingAction => existingAction.type === actionInstance.type && existingAction.behavior === actionInstance.behavior);
+      const actionExists = assetToUpdate.actions.some(existingAction => 
+        existingAction.type === actionInstance.type && existingAction.behavior === actionInstance.behavior
+      );
+      
       if (actionExists) {
         showNotification(`Action '${actionInstance.type} -> ${actionInstance.behavior}' already exists.`);
         return prevAssets;
       }
-      const updatedAsset = new Asset({ ...assetToUpdate, actions: [...assetToUpdate.actions, actionInstance] });
+      
+      const updatedAsset = new Asset({ 
+        ...assetToUpdate, 
+        actions: [...assetToUpdate.actions, actionInstance] 
+      });
+      
       const newAssets = [...prevAssets];
       newAssets[assetIndex] = updatedAsset;
       actionAdded = true;
       return newAssets;
     });
-    if (actionAdded) { setIsOptionsVisible(false); }
+    
+    if (actionAdded) {
+      setIsOptionsVisible(false);
+    }
   };
 
   const handleRemoveAction = (actionIdToRemove) => {
     if (!selectedAssetId) return;
     setCanvasAssets(prevAssets => prevAssets.map(asset => {
-      if (asset.canvasId === selectedAssetId) { const updatedAsset = asset.removeAction(actionIdToRemove); return new Asset({ ...updatedAsset }); }
+      if (asset.canvasId === selectedAssetId) {
+        // Find the action that's being removed
+        const actionToRemove = asset.actions.find(action => action.id === actionIdToRemove);
+        
+        const updatedAsset = new Asset({ ...asset });
+        
+        updatedAsset.actions = asset.actions.filter(action => action.id !== actionIdToRemove);
+        
+        // Makes sure collision has been removed
+        if (actionToRemove && actionToRemove.behavior === 'enableCollision') {
+          updatedAsset.hasCollision = false;
+        }
+        
+        return updatedAsset;
+      }
       return asset;
     }));
   };
@@ -180,30 +209,77 @@ function EditorPage() {
     showNotification(`Asset '${newAsset.name}' imported!`);
   };
 
+  const handleAssetsUpdated = (updatedAssets) => {
+    setCanvasAssets([...updatedAssets]);
+  };
+
   const handlePlayToggle = () => {
     setIsPlaying(prevIsPlaying => {
         const nextIsPlaying = !prevIsPlaying;
         if (nextIsPlaying) {
             setSelectedAssetId(null);
-             setCanvasAssets(currentAssets => {
-                 currentAssets.forEach(asset => {
-                     asset.actions?.forEach(action => { if (action.type === 'onStart') { action.execute(asset, {}); } });
-                 });
-                 return currentAssets;
-             });
+            
+            setCanvasAssets(currentAssets => {
+                const preparedAssets = currentAssets.map(asset => {
+                    // Create a clean copy of the asset
+                    const playAsset = new Asset({...asset});
+                    
+                    // Reset collision states
+                    playAsset.collidingWith = new Set();
+                    playAsset.isCollidingAbove = false;
+                    playAsset.isCollidingBelow = false;
+                    playAsset.isCollidingLeft = false;
+                    playAsset.isCollidingRight = false;
+                    playAsset.isCollidingWithCanvas = false;
+                    
+                    playAsset.actions = asset.actions.map(action => new Action(action));
+                    
+                    playAsset.isAnimating = false;
+                    
+                    return playAsset;
+                });
+                
+                // Run onStart actions
+                preparedAssets.forEach(asset => {
+                    asset.actions?.forEach(action => {
+                        if (action.type === 'onStart') {
+                            action.execute(asset, {});
+                        }
+                    });
+                });
+                
+                return preparedAssets;
+            });
         } else {
-             setCanvasAssets(currentAssets => {
-                 return currentAssets.map(asset => {
-                     const freshAsset = new Asset({...asset});
-                     freshAsset.actions = asset.actions.map(action => { const newAction = new Action(action); newAction.isRunning = false; return newAction; });
-                     freshAsset.velocityX = 0; freshAsset.velocityY = 0;
-                     return freshAsset;
-                 });
-             });
+            setCanvasAssets(currentAssets => {
+                return currentAssets.map(asset => {
+                    const freshAsset = new Asset({...asset});
+                    
+                    freshAsset.actions = asset.actions.map(action => { 
+                        const newAction = new Action(action); 
+                        newAction.isRunning = false; 
+                        return newAction; 
+                    });
+                    
+                    freshAsset.velocityX = 0; 
+                    freshAsset.velocityY = 0;
+                    
+                    freshAsset.isAnimating = false;
+                    
+                    freshAsset.hasCollision = asset.hasCollision;
+                    freshAsset.collidingWith = new Set();
+                    freshAsset.isCollidingAbove = false;
+                    freshAsset.isCollidingBelow = false;
+                    freshAsset.isCollidingLeft = false;
+                    freshAsset.isCollidingRight = false;
+                    
+                    return freshAsset;
+                });
+            });
         }
         return nextIsPlaying;
     });
-};
+  };
 
   const handleAttemptSelectWhilePlaying = () => {
     showNotification("Cannot select or modify assets while playing.", 2000);
@@ -239,6 +315,7 @@ function EditorPage() {
           isPlaying={isPlaying}
           onPlayToggle={handlePlayToggle}
           onAttemptSelectWhilePlaying={handleAttemptSelectWhilePlaying}
+          onAssetsUpdated={handleAssetsUpdated}
         />
       </div>
     </div>

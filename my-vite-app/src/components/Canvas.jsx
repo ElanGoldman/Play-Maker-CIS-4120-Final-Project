@@ -10,7 +10,8 @@ function Canvas({
     onAssetDraggedToCanvas,
     onAssetResized,
     onAssetDeleted,
-    onAttemptSelectWhilePlaying
+    onAttemptSelectWhilePlaying,
+    onAssetsUpdated
 }) {
 
   const canvasRef = useRef(null);
@@ -30,6 +31,11 @@ function Canvas({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const assetsRef = useRef(assets);
   const gameStateRef = useRef(gameState);
+  const previousPositionsRef = useRef({});
+  const debugRef = useRef({
+    previousPositions: {},
+    movementBlocked: false
+  });
 
   useEffect(() => { 
     assetsRef.current = assets; 
@@ -88,6 +94,16 @@ function Canvas({
         
         ctx.drawImage(img, asset.x, asset.y, asset.width, asset.height);
         
+        // Draw collision indicator if asset has collision enabled 
+        // (CAN COMMENT THIS PART OUT TO REMOVE HIGHLIGHT)
+        if (asset.hasCollision) {
+          ctx.strokeStyle = '#ff0000'; // Red border for collision-enabled assets
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 3]); // Dashed line
+          ctx.strokeRect(asset.x, asset.y, asset.width, asset.height);
+          ctx.setLineDash([]);
+        }
+        
         ctx.restore();
         
         if (asset.canvasId === selectedAssetId && !isPlaying) {
@@ -102,9 +118,197 @@ function Canvas({
     });
   };
 
+  // Check for collisions between assets and handle them
+  const checkCollisions = (currentAssets) => {
+    // Store current positions to detect changes
+    let positions = {};
+    let positionsChanged = false;
+    
+    // First, clear all collision states
+    currentAssets.forEach(asset => {
+      asset.collidingWith = new Set();
+      positions[asset.canvasId] = { x: asset.x, y: asset.y };
+    });
+    
+    // Check for collisions between assets with collision enabled
+    for (let i = 0; i < currentAssets.length; i++) {
+      const assetA = currentAssets[i];
+
+      if (!assetA.hasCollision) continue;
+
+      for (let j = i + 1; j < currentAssets.length; j++) {
+        console.log("LOOOP J");
+
+        const assetB = currentAssets[j];
+        if (!assetB.hasCollision) continue;
+        
+        // Check if these two assets are colliding using their actual sizes
+        if (isCollidingWithCurrentSize(assetA, assetB)) {
+          assetA.collidingWith.add(assetB.canvasId);
+          assetB.collidingWith.add(assetA.canvasId);
+          
+          // Handle hard collision (prevent overlapping)
+          resolveCollision(assetA, assetB);
+          positionsChanged = true;
+        }
+      }
+    }
+    
+    // Apply canvas boundaries to all assets with collision enabled
+    const canvas = canvasRef.current;
+    if (canvas) {
+      currentAssets.forEach(asset => {
+        if (asset.hasCollision) {
+          const oldX = asset.x;
+          const oldY = asset.y;
+          
+          const bound = (value, min, max) => Math.max(min, Math.min(value, max));
+          asset.x = bound(asset.x, 0, canvas.width - asset.width);
+          asset.y = bound(asset.y, 0, canvas.height - asset.height);
+          
+          if (oldX !== asset.x || oldY !== asset.y) {
+            positionsChanged = true;
+          }
+        }
+      });
+    }
+    
+    // Update the previousPositions for the next frame
+    previousPositionsRef.current = positions;
+    
+    // If positions changed, update the assets
+    if (positionsChanged && typeof onAssetsUpdated === 'function') {
+      onAssetsUpdated(currentAssets);
+    }
+    
+    return currentAssets;
+  };
+  
+  // Improved collision detection using current asset sizes
+  const isCollidingWithCurrentSize = (assetA, assetB) => {
+    const isColliding = (
+      assetA.x < assetB.x + assetB.width &&
+      assetA.x + assetA.width > assetB.x &&
+      assetA.y < assetB.y + assetB.height &&
+      assetA.y + assetA.height > assetB.y
+    );
+
+    return (
+      assetA.x < assetB.x + assetB.width &&
+      assetA.x + assetA.width > assetB.x &&
+      assetA.y < assetB.y + assetB.height &&
+      assetA.y + assetA.height > assetB.y
+    );
+  };
+  
+  // Resolve collision between two assets by pushing them apart
+  const resolveCollision = (assetA, assetB) => {
+    // Calculate centers
+    const centerA = {
+      x: assetA.x + assetA.width / 2,
+      y: assetA.y + assetA.height / 2
+    };
+    
+    const centerB = {
+      x: assetB.x + assetB.width / 2,
+      y: assetB.y + assetB.height / 2
+    };
+    
+    // Calculate overlap
+    const overlapX = (assetA.width / 2 + assetB.width / 2) - Math.abs(centerA.x - centerB.x);
+    const overlapY = (assetA.height / 2 + assetB.height / 2) - Math.abs(centerA.y - centerB.y);
+    
+    if (overlapX < overlapY) {
+      if (centerA.x < centerB.x) {
+        assetA.x -= overlapX / 2;
+        assetB.x += overlapX / 2;
+        assetA.velocityX = 0; 
+        assetB.velocityX = 0;
+      } else {
+        assetA.x += overlapX / 2;
+        assetB.x -= overlapX / 2;
+        assetA.velocityX = 0;
+        assetB.velocityX = 0;
+      }
+    } else {
+      // Resolve vertically - push both objects
+      if (centerA.y < centerB.y) {
+        assetA.y -= overlapY / 2;
+        assetB.y += overlapY / 2;
+        assetA.velocityY = 0;
+        assetB.velocityY = 0;
+      } else {
+        assetA.y += overlapY / 2;
+        assetB.y -= overlapY / 2;
+        assetA.velocityY = 0;
+        assetB.velocityY = 0;
+      }
+    }
+    
+    // Keep assets within canvas boundaries
+    // (CAN DELETE IF WE DON'T PLAN TO HAVE BOUNDS)
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const bound = (value, min, max) => Math.max(min, Math.min(value, max));
+      
+      assetA.x = bound(assetA.x, 0, canvas.width - assetA.width);
+      assetA.y = bound(assetA.y, 0, canvas.height - assetA.height);
+      
+      assetB.x = bound(assetB.x, 0, canvas.width - assetB.width);
+      assetB.y = bound(assetB.y, 0, canvas.height - assetB.height);
+    }
+  };
+
+  // Process a movement action for a single asset
+  const processSingleAssetMovement = (asset, deltaX, deltaY) => {
+    if (!asset) return false;
+    
+    // Store original position before movement
+    const originalX = asset.x;
+    const originalY = asset.y;
+    
+    // Apply movement
+    asset.x += deltaX;
+    asset.y += deltaY;
+    
+    // Apply canvas boundaries
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const bound = (value, min, max) => Math.max(min, Math.min(value, max));
+      asset.x = bound(asset.x, 0, canvas.width - asset.width);
+      asset.y = bound(asset.y, 0, canvas.height - asset.height);
+    }
+    
+    let collisionOccurred = false;
+    
+    // If asset has collision enabled, check for collisions against other assets
+    if (asset.hasCollision) {
+      assetsRef.current.forEach(otherAsset => {
+        if (otherAsset.canvasId === asset.canvasId || !otherAsset.hasCollision) return;
+        
+        if (isCollidingWithCurrentSize(asset, otherAsset)) {
+          collisionOccurred = true;
+          asset.collidingWith.add(otherAsset.canvasId);
+          otherAsset.collidingWith.add(asset.canvasId);
+          
+          asset.x = originalX;
+          asset.y = originalY;
+          
+          // Stop velocity
+          asset.velocityX = 0;
+          asset.velocityY = 0;
+        }
+      });
+    }
+    
+    return true;
+  };
+
   // Process all active key actions at one time
   const processKeyActions = () => {
-    if (!isPlaying) return;
+    if (!isPlaying) {
+      return;
+    }
     
     // Map of key codes to action types
     const keyActionMap = {
@@ -116,43 +320,97 @@ function Canvas({
     };
     
     // Process all currently pressed keys
-    Object.entries(gameState.keyState).forEach(([keyCode, isPressed]) => {
-      if (isPressed && keyActionMap[keyCode]) {
+    Object.entries(gameStateRef.current.keyState).forEach(([keyCode, isPressed]) => {
+      if (isPressed) {
         const actionType = keyActionMap[keyCode];
         
-        assetsRef.current.forEach(asset => {
-          asset.actions?.forEach(action => {
-            if (action.type === actionType) {
-              action.execute(asset, gameStateRef.current);
+        if (actionType) {
+          assetsRef.current.forEach(asset => {
+            if (!asset.actions || asset.actions.length === 0) return;
+            
+            // Track if position changes
+            const originalX = asset.x;
+            const originalY = asset.y;
+            
+            // Execute all relevant actions
+            asset.actions.forEach(action => {
+              if (action.type === actionType && action.enabled) {
+                // Special handling for setVector action which affects velocity
+                if (action.behavior === 'setVector') {
+                  // Apply the velocity directly as movement
+                  if (action.parameters.x !== undefined || action.parameters.y !== undefined) {
+                    const deltaX = action.parameters.x || 0;
+                    const deltaY = action.parameters.y || 0;
+                    
+                    // Process movement with collision checking
+                    processSingleAssetMovement(asset, deltaX, deltaY);
+                  }
+                } else {
+                  // For other action types (like jump), execute normally
+                  action.execute(asset, gameStateRef.current);
+                }
+              }
+            });
+            
+            // If position changed after actions, check collisions again
+            if (asset.x !== originalX || asset.y !== originalY) {
+              // Apply canvas boundary constraints
+              const canvas = canvasRef.current;
+              if (canvas) {
+                const bound = (value, min, max) => Math.max(min, Math.min(value, max));
+                asset.x = bound(asset.x, 0, canvas.width - asset.width);
+                asset.y = bound(asset.y, 0, canvas.height - asset.height);
+              }
             }
           });
-        });
+          
+          // Force redraw after actions
+          forceRedrawAssets();
+          
+          // Check for collisions after all movements
+          checkCollisions(assetsRef.current);
+        }
       }
     });
   };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (!isPlaying) return;
+      if (!isPlaying) {
+        return;
+      }
       
-      // Prevent default key behaviors like moving the site
+      // Prevent default key behaviors like scrolling the page
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
       }
       
       // Update key state
-      setGameState(prev => ({
-        ...prev,
-        keyState: { ...prev.keyState, [e.code]: true }
-      }));
+      setGameState(prev => {
+        // Only update if key wasn't already pressed
+        if (!prev.keyState[e.code]) {
+          const newState = {
+            ...prev,
+            keyState: { ...prev.keyState, [e.code]: true }
+          };
+          return newState;
+        }
+        return prev;
+      });
     };
     
     const handleKeyUp = (e) => {
-      if (!isPlaying) return;
+      if (!isPlaying) {
+        return;
+      }
+      
       setGameState(prev => {
         const newKeyState = { ...prev.keyState };
-        delete newKeyState[e.code];
-        return { ...prev, keyState: newKeyState };
+        if (newKeyState[e.code]) {
+          delete newKeyState[e.code];
+          return { ...prev, keyState: newKeyState };
+        }
+        return prev;
       });
     };
 
@@ -169,6 +427,9 @@ function Canvas({
         });
       });
       
+      // Check initial collisions
+      checkCollisions(assetsRef.current);
+      
       // Set up game loop
       let animationFrameId;
       const gameLoop = (timestamp) => {
@@ -177,6 +438,25 @@ function Canvas({
         
         // Process all key actions in every frame
         processKeyActions();
+        
+        // Process assets with ongoing velocity
+        let movementOccurred = false;
+        assetsRef.current.forEach(asset => {
+          if ((asset.velocityX || asset.velocityY) && !asset.isAnimating) {
+            const oldX = asset.x;
+            const oldY = asset.y;
+            
+            processSingleAssetMovement(asset, asset.velocityX, asset.velocityY);
+            
+            if (oldX !== asset.x || oldY !== asset.y) {
+              movementOccurred = true;
+            }
+          }
+        });
+        
+        if (movementOccurred) {
+          checkCollisions(assetsRef.current);
+        }
         
         forceRedrawAssets();
         animationFrameId = requestAnimationFrame(gameLoop);
@@ -234,6 +514,12 @@ function Canvas({
     if (draggingAsset) { 
       draggingAsset.x = x - dragOffset.x; 
       draggingAsset.y = y - dragOffset.y; 
+      
+      // Check collisions while dragging if the asset has collision
+      if (draggingAsset.hasCollision) {
+        checkCollisions(assetsRef.current);
+      }
+      
       forceRedrawAssets(); 
       return; 
     }
@@ -264,11 +550,31 @@ function Canvas({
             ctx.strokeStyle = '#64ffda'; 
             ctx.lineWidth = 3; 
             ctx.strokeRect(asset.x - 4, asset.y - 4, newWidth + 8, newHeight + 8);
-            const handleSize = 10; 
+            
+            // Draw collision indicator if enabled
+            if (asset.hasCollision) {
+              ctx.strokeStyle = '#ff0000'; // Red border for collision-enabled assets
+              ctx.lineWidth = 2;
+              ctx.setLineDash([5, 3]); // Dashed line
+              ctx.strokeRect(asset.x, asset.y, newWidth, newHeight);
+              ctx.setLineDash([]); // Reset dash
+            }
+            
+            const handleSize = 10;
             ctx.fillStyle = '#64ffda'; 
             ctx.fillRect(asset.x + newWidth - handleSize/2, asset.y + newHeight - handleSize/2, handleSize, handleSize);
           } else {
             ctx.drawImage(img, asset.x, asset.y, asset.width, asset.height);
+            
+            // Draw collision indicator for other assets
+            if (asset.hasCollision) {
+              ctx.strokeStyle = '#ff0000'; // Red border for collision-enabled assets
+              ctx.lineWidth = 2;
+              ctx.setLineDash([5, 3]); // Dashed line
+              ctx.strokeRect(asset.x, asset.y, asset.width, asset.height);
+              ctx.setLineDash([]); // Reset dash
+            }
+            
             if (asset.canvasId === selectedAssetId && asset.canvasId !== resizeAsset.canvasId) {
               ctx.strokeStyle = '#64ffda'; 
               ctx.lineWidth = 3; 
@@ -326,6 +632,9 @@ function Canvas({
             });
         });
         
+        // Check for collisions after actions
+        checkCollisions(assetsRef.current);
+        
         if (typeof onAttemptSelectWhilePlaying === 'function') {
             onAttemptSelectWhilePlaying();
         }
@@ -368,9 +677,18 @@ function Canvas({
       if (typeof onAssetResized === 'function') { 
         onAssetResized(resizeAsset.canvasId, newWidth, newHeight); 
       }
+      
+      // Check for collisions after resizing if asset has collision enabled
+      if (resizeAsset.hasCollision) {
+        checkCollisions(assetsRef.current);
+      }
     }
     
     if (draggingAsset) { 
+      // Check for collisions after dragging if asset has collision enabled
+      if (draggingAsset.hasCollision) {
+        checkCollisions(assetsRef.current);
+      }
       setDraggingAsset(null); 
       setDragOffset({ x: 0, y: 0 }); 
     }
@@ -445,13 +763,21 @@ function Canvas({
   };
 
   const handlePlayToggle = () => {
+    // Clear all key states when toggling play state
+    if (isPlaying) {
+      setGameState(prev => ({
+        ...prev,
+        keyState: {}
+      }));
+    }
+    
     onPlayToggle();
   };
 
   return (
     <div className="canvas-container">
       <canvas
-        ref={canvasRef} width={800} height={600}
+        ref={canvasRef} width={800} height={500}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
