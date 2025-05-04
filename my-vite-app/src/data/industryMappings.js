@@ -170,6 +170,54 @@ export const industryMappings = {
         }
     }`
   },
+  'onStart_winCollision': {
+    engine: 'Unity',
+    title: "Win Condition Collision Detector",
+    description: "This adds a special collision detector to an object that triggers a win condition when it collides with another object that has collision enabled. In Unity, you would use OnCollisionEnter to detect when objects touch, then trigger game-winning events like showing a victory screen.",
+    keywords: ["Collider", "Victory", "OnCollisionEnter", "Win Condition", "Game State", "UI Display"],
+    link: "https://docs.unity3d.com/ScriptReference/MonoBehaviour.OnCollisionEnter.html",
+    codeSnippet: `
+    using UnityEngine;
+    using UnityEngine.UI;
+
+    public class WinCollisionDetector : MonoBehaviour
+    {
+        public Text winText;
+        private bool hasWon = false;
+        
+        void Start()
+        {
+            // Hide win text initially
+            if (winText != null)
+                winText.gameObject.SetActive(false);
+            
+            // Make sure we have a collider for collision detection
+            if (GetComponent<Collider>() == null)
+            {
+                gameObject.AddComponent<BoxCollider>();
+            }
+        }
+        
+        void OnCollisionEnter(Collision collision) 
+        {
+            if (!hasWon) {
+                hasWon = true;
+                
+                // Show win text
+                if (winText != null) {
+                    winText.gameObject.SetActive(true);
+                    winText.text = "YOU WIN!";
+                }
+                
+                // Could also trigger other win effects here:
+                // - Play victory sound
+                // - Trigger particle effects
+                // - Load next level
+                // - etc.
+            }
+        }
+    }`
+  }
 };
 
 export const getIndustryInfo = (triggerType, behaviorId) => {

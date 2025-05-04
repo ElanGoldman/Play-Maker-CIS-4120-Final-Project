@@ -25,15 +25,23 @@ function EditorPage() {
     new Asset({ id: 'default-3', type: 'object', name: 'Pipe', imgSrc: 'https://upload.wikimedia.org/wikipedia/commons/9/93/Mario_pipe.png', width: 32, height: 32 })
   ];
 
-  const showNotification = (message, duration = 3000) => {
+  const showNotification = (message, duration = 2000) => {
+    console.log("EDITOR NOTIFICATION CALL:", message);
+    
+    // Always clear any existing notification timeout
     if (notificationTimeoutId) {
       clearTimeout(notificationTimeoutId);
+      setNotificationTimeoutId(null);
     }
+    
     setNotification(message);
+    
+    // Set timeout to clear notification
     const timeoutId = setTimeout(() => {
-      setNotification('');
+      setNotification(currentMsg => currentMsg === message ? '' : currentMsg);
       setNotificationTimeoutId(null);
     }, duration);
+    
     setNotificationTimeoutId(timeoutId);
   };
 
@@ -296,7 +304,13 @@ function EditorPage() {
         <input type="text" value={projectName} onChange={handleProjectNameChange} className="project-name-input" aria-label="Project Name"/>
         <button className="back-button" onClick={handleBackToProjects}> Back to Projects </button>
       </header>
-      {notification && ( <div className="editor-notification"> {notification} </div> )}
+      
+      {notification && (
+        <div className="editor-notification">
+          {notification}
+        </div>
+      )}
+      
       <div className={`editor-layout ${isOptionsVisible ? 'options-expanded' : ''}`}>
         <div className="left-panel">
           {activePanel === 'assets' ? (
@@ -316,6 +330,7 @@ function EditorPage() {
           onPlayToggle={handlePlayToggle}
           onAttemptSelectWhilePlaying={handleAttemptSelectWhilePlaying}
           onAssetsUpdated={handleAssetsUpdated}
+          showNotification={showNotification}
         />
       </div>
     </div>

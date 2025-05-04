@@ -91,6 +91,16 @@ const CollisionIcon = () => (
   </svg>
 );
 
+const WinCollisionIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" />
+    <rect x="14" y="3" width="7" height="7" />
+    <rect x="14" y="14" width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
+    <polygon points="12,6 14,10 18,11 15,14 16,18 12,16 8,18 9,14 6,11 10,10" fill="#64ffda" stroke="#64ffda" strokeWidth="0.5" />
+  </svg>
+);
+
 const InfoModal = ({ data, onClose }) => {
   if (!data) return null;
 
@@ -165,7 +175,8 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
     ],
     onStart: [
       { id: 'fadeIn', name: 'Fade In', params: { duration: 1000 }, icon: <FadeIcon /> },
-      { id: 'enableCollision', name: 'Enable Collision', params: {}, icon: <CollisionIcon /> }
+      { id: 'enableCollision', name: 'Enable Collision', params: {}, icon: <CollisionIcon /> },
+      { id: 'winCollision', name: 'Win Collision', params: {}, icon: <WinCollisionIcon /> }
     ],
     keyPress: [
       { id: 'setVector', name: 'Vector Up', params: { x: 0, y: -5 }, icon: <ArrowUpIcon /> },
@@ -328,9 +339,16 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
           )}
           
           {/* Display collision status */}
-          {selectedAsset.hasCollision && (
+          {selectedAsset.hasCollision && !selectedAsset.isWinObject && (
             <div className="collision-status">
               <CollisionIcon /> Collision Active
+            </div>
+          )}
+          
+          {/* Display win collision status */}
+          {selectedAsset.isWinObject && (
+            <div className="collision-status" style={{ backgroundColor: 'rgba(0, 255, 0, 0.1)', borderColor: '#00ff00', color: '#00ff00' }}>
+              <WinCollisionIcon /> Win Collision Active
             </div>
           )}
         </div>

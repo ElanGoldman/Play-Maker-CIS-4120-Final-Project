@@ -214,6 +214,13 @@ class Action {
         console.log(`Enabling collision for ${asset.name}`);
         asset.hasCollision = true;
         return true;
+      
+      case 'winCollision':
+        // Enable both collision detection and win state for the asset
+        console.log(`Enabling win collision for ${asset.name}`);
+        asset.hasCollision = true;
+        asset.isWinObject = true;
+        return true;
                 
       default:
         console.warn(`Unknown behavior: ${this.behavior}`);

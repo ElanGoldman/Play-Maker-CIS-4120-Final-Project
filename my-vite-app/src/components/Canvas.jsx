@@ -11,7 +11,8 @@ function Canvas({
     onAssetResized,
     onAssetDeleted,
     onAttemptSelectWhilePlaying,
-    onAssetsUpdated
+    onAssetsUpdated,
+    showNotification
 }) {
 
   const canvasRef = useRef(null);
@@ -89,9 +90,7 @@ function Canvas({
         const opacity = asset.opacity !== undefined ? asset.opacity : 1;
         
         ctx.save();
-        
         ctx.globalAlpha = opacity;
-        
         ctx.drawImage(img, asset.x, asset.y, asset.width, asset.height);
         
         // Draw collision indicator if asset has collision enabled 
@@ -101,6 +100,15 @@ function Canvas({
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 3]); // Dashed line
           ctx.strokeRect(asset.x, asset.y, asset.width, asset.height);
+          ctx.setLineDash([]);
+        }
+        
+        // Draw win collision indicator if asset has winCollision enabled
+        if (asset.isWinObject) {
+          ctx.strokeStyle = '#00ff00';//green
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 3]);
+          ctx.strokeRect(asset.x - 2, asset.y - 2, asset.width + 4, asset.height + 4);
           ctx.setLineDash([]);
         }
         
@@ -117,12 +125,20 @@ function Canvas({
       }
     });
   };
+  
+  const handleWinNotification = () => {
+    if (typeof showNotification === 'function') {
+      showNotification("🏆 YOU WIN! 🏆");
+    }
+    return true;
+  };
 
   // Check for collisions between assets and handle them
   const checkCollisions = (currentAssets) => {
     // Store current positions to detect changes
     let positions = {};
     let positionsChanged = false;
+    let winCollisionDetected = false;
     
     // First, clear all collision states
     currentAssets.forEach(asset => {
@@ -133,12 +149,10 @@ function Canvas({
     // Check for collisions between assets with collision enabled
     for (let i = 0; i < currentAssets.length; i++) {
       const assetA = currentAssets[i];
-
+  
       if (!assetA.hasCollision) continue;
-
+  
       for (let j = i + 1; j < currentAssets.length; j++) {
-        console.log("LOOOP J");
-
         const assetB = currentAssets[j];
         if (!assetB.hasCollision) continue;
         
@@ -147,6 +161,16 @@ function Canvas({
           assetA.collidingWith.add(assetB.canvasId);
           assetB.collidingWith.add(assetA.canvasId);
           
+          if ((assetA.isWinObject || assetB.isWinObject) && isPlaying) {
+            winCollisionDetected = true;
+            console.log("Win collision detected!", { 
+              assetA: assetA.name, 
+              assetB: assetB.name,
+              isAWinObject: assetA.isWinObject,
+              isBWinObject: assetB.isWinObject
+            });
+          }
+          
           // Handle hard collision (prevent overlapping)
           resolveCollision(assetA, assetB);
           positionsChanged = true;
@@ -154,7 +178,7 @@ function Canvas({
       }
     }
     
-    // Apply canvas boundaries to all assets with collision enabled
+    // Apply canvas boundaries
     const canvas = canvasRef.current;
     if (canvas) {
       currentAssets.forEach(asset => {
@@ -176,6 +200,12 @@ function Canvas({
     // Update the previousPositions for the next frame
     previousPositionsRef.current = positions;
     
+    // Handle win state with notification
+    if (winCollisionDetected) {
+      console.log("Win collision detected! NOTIFY FUNCTION");
+      handleWinNotification();
+    }
+    
     // If positions changed, update the assets
     if (positionsChanged && typeof onAssetsUpdated === 'function') {
       onAssetsUpdated(currentAssets);
@@ -186,13 +216,6 @@ function Canvas({
   
   // Improved collision detection using current asset sizes
   const isCollidingWithCurrentSize = (assetA, assetB) => {
-    const isColliding = (
-      assetA.x < assetB.x + assetB.width &&
-      assetA.x + assetA.width > assetB.x &&
-      assetA.y < assetB.y + assetB.height &&
-      assetA.y + assetA.height > assetB.y
-    );
-
     return (
       assetA.x < assetB.x + assetB.width &&
       assetA.x + assetA.width > assetB.x &&
@@ -290,6 +313,18 @@ function Canvas({
           collisionOccurred = true;
           asset.collidingWith.add(otherAsset.canvasId);
           otherAsset.collidingWith.add(asset.canvasId);
+          
+          // Check for win collision
+          if ((asset.isWinObject || otherAsset.isWinObject) && isPlaying) {
+            console.log("Win collision detected during movement!", {
+              asset: asset.name,
+              otherAsset: otherAsset.name,
+              isAssetWinObject: asset.isWinObject,
+              isOtherWinObject: otherAsset.isWinObject
+            });
+            
+            handleWinNotification();
+          }
           
           asset.x = originalX;
           asset.y = originalY;
@@ -560,6 +595,15 @@ function Canvas({
               ctx.setLineDash([]); // Reset dash
             }
             
+            // Draw win collision indicator if asset has winCollision enabled
+            if (asset.isWinObject) {
+              ctx.strokeStyle = '#00ff00';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([5, 3]);
+              ctx.strokeRect(asset.x - 2, asset.y - 2, newWidth + 4, newHeight + 4);
+              ctx.setLineDash([]);
+            }
+            
             const handleSize = 10;
             ctx.fillStyle = '#64ffda'; 
             ctx.fillRect(asset.x + newWidth - handleSize/2, asset.y + newHeight - handleSize/2, handleSize, handleSize);
@@ -573,6 +617,15 @@ function Canvas({
               ctx.setLineDash([5, 3]); // Dashed line
               ctx.strokeRect(asset.x, asset.y, asset.width, asset.height);
               ctx.setLineDash([]); // Reset dash
+            }
+            
+            // Draw win collision indicator for other assets
+            if (asset.isWinObject) {
+              ctx.strokeStyle = '#00ff00'; // Green border for win-collision-enabled assets
+              ctx.lineWidth = 2;
+              ctx.setLineDash([5, 3]); // Dashed line
+              ctx.strokeRect(asset.x - 2, asset.y - 2, asset.width + 4, asset.height + 4);
+              ctx.setLineDash([]);
             }
             
             if (asset.canvasId === selectedAssetId && asset.canvasId !== resizeAsset.canvasId) {
