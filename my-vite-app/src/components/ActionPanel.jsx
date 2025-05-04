@@ -109,19 +109,21 @@ const InfoModal = ({ data, onClose }) => {
       <div className="info-modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="info-modal-close" onClick={onClose}>✕</button>
         <h3>{data.title} (in {data.engine})</h3>
-        <p>{data.description}</p>
-        {data.codeSnippet && (
-          <>
-            <p><strong>Example Code:</strong></p>
-            <pre className="code-snippet-block"><code>{data.codeSnippet.trim()}</code></pre>
-          </>
-        )}
-        {data.keywords && data.keywords.length > 0 && (
-           <p><strong>Keywords:</strong> {data.keywords.join(', ')}</p>
-        )}
-        {data.link && (
-          <p><a href={data.link} target="_blank" rel="noopener noreferrer">Learn More ({data.engine} Docs)</a></p>
-        )}
+        <div className="info-modal-content-inner">
+          <p>{data.description}</p>
+          {data.codeSnippet && (
+            <>
+              <p><strong>Example Code:</strong></p>
+              <pre className="code-snippet-block"><code>{data.codeSnippet.trim()}</code></pre>
+            </>
+          )}
+          {data.keywords && data.keywords.length > 0 && (
+             <p><strong>Keywords:</strong> {data.keywords.join(', ')}</p>
+          )}
+          {data.link && (
+            <p><a href={data.link} target="_blank" rel="noopener noreferrer">Learn More ({data.engine} Docs)</a></p>
+          )}
+        </div>
       </div>
     </div>
   );
