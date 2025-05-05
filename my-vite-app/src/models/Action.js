@@ -85,8 +85,6 @@ class Action {
         if (asset.hasGravity && asset.canJump) {
           asset.velocityY = -10;
           asset.canJump = false;
-
-          console.log(asset.toJSON())
         } 
         return true;
       }
