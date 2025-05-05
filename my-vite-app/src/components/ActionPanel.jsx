@@ -101,6 +101,13 @@ const WinCollisionIcon = () => (
   </svg>
 );
 
+const StaticIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
 const InfoModal = ({ data, onClose }) => {
   if (!data) return null;
 
@@ -145,7 +152,6 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
       }
       prevAssetIdRef.current = selectedAsset.canvasId;
     } else if (!selectedAsset) {
-       // Reset view if asset is deselected
         setCurrentView('actions');
         setSelectedTrigger(null);
         if (typeof onOptionsVisibilityChange === 'function') {
@@ -179,6 +185,7 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
       { id: 'fadeIn', name: 'Fade In', params: { duration: 1000 }, icon: <FadeIcon /> },
       { id: 'enableCollision', name: 'Enable Collision', params: {}, icon: <CollisionIcon /> },
       { id: 'enableGravity', name: 'Enable Gravity', params: {}, icon: <CollisionIcon /> },
+      { id: 'setStatic', name: 'Set Static', params: {}, icon: <StaticIcon /> },
       { id: 'winCollision', name: 'Win Collision', params: {}, icon: <WinCollisionIcon /> }
     ],
     keyPress: [
@@ -340,17 +347,19 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
               })}
             </div>
           )}
-          
-          {/* Display collision status */}
-          {selectedAsset.hasCollision && !selectedAsset.isWinObject && (
+
+          {selectedAsset.isStatic && (
+             <div className="collision-status static-status">
+               <StaticIcon /> Static Active
+             </div>
+           )}
+          {selectedAsset.hasCollision && !selectedAsset.isWinObject && !selectedAsset.isStatic && (
             <div className="collision-status">
               <CollisionIcon /> Collision Active
             </div>
           )}
-          
-          {/* Display win collision status */}
           {selectedAsset.isWinObject && (
-            <div className="collision-status" style={{ backgroundColor: 'rgba(0, 255, 0, 0.1)', borderColor: '#00ff00', color: '#00ff00' }}>
+            <div className="collision-status win-status">
               <WinCollisionIcon /> Win Collision Active
             </div>
           )}

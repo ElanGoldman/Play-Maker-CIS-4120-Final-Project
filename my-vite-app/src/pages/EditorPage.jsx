@@ -27,21 +27,19 @@ function EditorPage() {
 
   const showNotification = (message, duration = 2000) => {
     console.log("EDITOR NOTIFICATION CALL:", message);
-    
-    // Always clear any existing notification timeout
+
     if (notificationTimeoutId) {
       clearTimeout(notificationTimeoutId);
       setNotificationTimeoutId(null);
     }
-    
+
     setNotification(message);
-    
-    // Set timeout to clear notification
+
     const timeoutId = setTimeout(() => {
       setNotification(currentMsg => currentMsg === message ? '' : currentMsg);
       setNotificationTimeoutId(null);
     }, duration);
-    
+
     setNotificationTimeoutId(timeoutId);
   };
 
@@ -116,7 +114,7 @@ function EditorPage() {
     const customAssetsToSave = availableAssets.filter(asset => !defaultAssetIds.includes(asset.id));
     const projectData = { id: projectId, name: projectName, lastSaved: new Date().toISOString(), canvasAssets: canvasAssets.map(asset => asset.toJSON()), availableAssets: customAssetsToSave.map(asset => asset.toJSON()) };
     try { localStorage.setItem(`project_${projectId}`, JSON.stringify(projectData)); }
-    catch (error) { console.error("Error saving project data:", error); showNotification("Error saving project!", 5000); }
+    catch (error) { console.error("Error saving project data:", error);}
   }, [canvasAssets, projectId, projectName, availableAssets]);
 
   const getSelectedAsset = () => {
@@ -140,36 +138,51 @@ function EditorPage() {
 
   const handleAddAction = (action) => {
     if (!selectedAssetId) return;
-    
+
     const actionInstance = action instanceof Action ? action : new Action(action);
     console.log(`Adding action: ${actionInstance.type} -> ${actionInstance.behavior} to asset ${selectedAssetId}`);
-    
+
     let actionAdded = false;
     setCanvasAssets(prevAssets => {
       const assetIndex = prevAssets.findIndex(asset => asset.canvasId === selectedAssetId);
       if (assetIndex === -1) return prevAssets;
-      
+
       const assetToUpdate = prevAssets[assetIndex];
-      const actionExists = assetToUpdate.actions.some(existingAction => 
+      const actionExists = assetToUpdate.actions.some(existingAction =>
         existingAction.type === actionInstance.type && existingAction.behavior === actionInstance.behavior
       );
-      
+
       if (actionExists) {
         showNotification(`Action '${actionInstance.type} -> ${actionInstance.behavior}' already exists.`);
         return prevAssets;
       }
-      
-      const updatedAsset = new Asset({ 
-        ...assetToUpdate, 
-        actions: [...assetToUpdate.actions, actionInstance] 
-      });
-      
+
+      const updatedAsset = new Asset({ ...assetToUpdate });
+
+      updatedAsset.actions = [...assetToUpdate.actions, actionInstance];
+
+      // Apply immediate effect for properties set by 'onStart' actions
+      if (actionInstance.type === 'onStart') {
+          if (actionInstance.behavior === 'enableCollision') {
+              updatedAsset.hasCollision = true;
+          } else if (actionInstance.behavior === 'winCollision') {
+              updatedAsset.hasCollision = true;
+              updatedAsset.isWinObject = true;
+          } else if (actionInstance.behavior === 'setStatic') {
+              updatedAsset.isStatic = true;
+              updatedAsset.hasCollision = true; // Static generally implies collision
+          } else if (actionInstance.behavior === 'enableGravity') {
+            updatedAsset.hasGravity = true;
+          }
+      }
+
+
       const newAssets = [...prevAssets];
       newAssets[assetIndex] = updatedAsset;
       actionAdded = true;
       return newAssets;
     });
-    
+
     if (actionAdded) {
       setIsOptionsVisible(false);
     }
@@ -179,23 +192,40 @@ function EditorPage() {
     if (!selectedAssetId) return;
     setCanvasAssets(prevAssets => prevAssets.map(asset => {
       if (asset.canvasId === selectedAssetId) {
-        // Find the action that's being removed
         const actionToRemove = asset.actions.find(action => action.id === actionIdToRemove);
-        
         const updatedAsset = new Asset({ ...asset });
-        
+
         updatedAsset.actions = asset.actions.filter(action => action.id !== actionIdToRemove);
-        
-        // Makes sure collision has been removed
-        if (actionToRemove && actionToRemove.behavior === 'enableCollision') {
-          updatedAsset.hasCollision = false;
+
+        // Revert properties if the corresponding action is removed
+        if (actionToRemove) {
+          if (actionToRemove.behavior === 'enableCollision' && !updatedAsset.actions.some(a => a.behavior === 'winCollision' || a.behavior === 'setStatic')) {
+            updatedAsset.hasCollision = false;
+          }
+          if (actionToRemove.behavior === 'winCollision') {
+            updatedAsset.isWinObject = false;
+            // Only remove collision if no other action enables it
+             if (!updatedAsset.actions.some(a => a.behavior === 'enableCollision' || a.behavior === 'setStatic')) {
+                 updatedAsset.hasCollision = false;
+             }
+          }
+           if (actionToRemove.behavior === 'setStatic') {
+              updatedAsset.isStatic = false;
+              // Only remove collision if no other action enables it
+              if (!updatedAsset.actions.some(a => a.behavior === 'enableCollision' || a.behavior === 'winCollision')) {
+                  updatedAsset.hasCollision = false;
+              }
+           }
+          if (actionToRemove.behavior === 'enableGravity') {
+            updatedAsset.hasGravity = false;
+          }
         }
-        
         return updatedAsset;
       }
       return asset;
     }));
   };
+
 
   const handleAssetResized = (assetId, newWidth, newHeight) => {
     setCanvasAssets(prevAssets => prevAssets.map(asset => {
@@ -226,28 +256,40 @@ function EditorPage() {
         const nextIsPlaying = !prevIsPlaying;
         if (nextIsPlaying) {
             setSelectedAssetId(null);
-            
+
             setCanvasAssets(currentAssets => {
                 const preparedAssets = currentAssets.map(asset => {
-                    // Create a clean copy of the asset
                     const playAsset = new Asset({...asset});
-                    
-                    // Reset collision states
+
                     playAsset.collidingWith = new Set();
                     playAsset.isCollidingAbove = false;
                     playAsset.isCollidingBelow = false;
                     playAsset.isCollidingLeft = false;
                     playAsset.isCollidingRight = false;
                     playAsset.isCollidingWithCanvas = false;
-                    
+
                     playAsset.actions = asset.actions.map(action => new Action(action));
-                    
                     playAsset.isAnimating = false;
-                    
+
+                    // Reset velocities for non-static objects
+                    if (!playAsset.isStatic) {
+                        playAsset.velocityX = 0;
+                        playAsset.velocityY = 0;
+                        playAsset.accelerationX = 0;
+                        playAsset.accelerationY = playAsset.hasGravity ? 1 : 0;
+                    } else {
+                       // Ensure static objects have zero velocity/acceleration
+                        playAsset.velocityX = 0;
+                        playAsset.velocityY = 0;
+                        playAsset.accelerationX = 0;
+                        playAsset.accelerationY = 0;
+                    }
+                    playAsset.canJump = true;
+
+
                     return playAsset;
                 });
-                
-                // Run onStart actions
+
                 preparedAssets.forEach(asset => {
                     asset.actions?.forEach(action => {
                         if (action.type === 'onStart') {
@@ -255,39 +297,45 @@ function EditorPage() {
                         }
                     });
                 });
-                
+
                 return preparedAssets;
             });
         } else {
             setCanvasAssets(currentAssets => {
                 return currentAssets.map(asset => {
-                    const freshAsset = new Asset({...asset});
-                    
-                    freshAsset.actions = asset.actions.map(action => { 
-                        const newAction = new Action(action); 
-                        newAction.isRunning = false; 
-                        return newAction; 
+                    // Re-create asset from its saved state (toJSON) to ensure clean state
+                    const editorAsset = Asset.fromJSON(asset.toJSON());
+                    editorAsset.actions = asset.actions.map(actionData => Action.fromJSON(actionData)); // Re-instantiate actions
+
+                    // Reset dynamic properties not saved in JSON
+                    editorAsset.collidingWith = new Set();
+                    editorAsset.isCollidingAbove = false;
+                    editorAsset.isCollidingBelow = false;
+                    editorAsset.isCollidingLeft = false;
+                    editorAsset.isCollidingRight = false;
+                    editorAsset.isCollidingWithCanvas = false;
+                    editorAsset.isAnimating = false;
+                    editorAsset.canJump = true; // Reset jump state
+
+                    // Apply properties based on actions again for editor view consistency
+                    editorAsset.actions.forEach(action => {
+                       if (action.type === 'onStart') {
+                           if (action.behavior === 'enableCollision') editorAsset.hasCollision = true;
+                           if (action.behavior === 'winCollision') { editorAsset.hasCollision = true; editorAsset.isWinObject = true; }
+                           if (action.behavior === 'setStatic') { editorAsset.isStatic = true; editorAsset.hasCollision = true; }
+                           if (action.behavior === 'enableGravity') editorAsset.hasGravity = true;
+                       }
                     });
-                    
-                    freshAsset.velocityX = 0; 
-                    freshAsset.velocityY = 0;
-                    
-                    freshAsset.isAnimating = false;
-                    
-                    freshAsset.hasCollision = asset.hasCollision;
-                    freshAsset.collidingWith = new Set();
-                    freshAsset.isCollidingAbove = false;
-                    freshAsset.isCollidingBelow = false;
-                    freshAsset.isCollidingLeft = false;
-                    freshAsset.isCollidingRight = false;
-                    
-                    return freshAsset;
+
+
+                    return editorAsset;
                 });
             });
         }
         return nextIsPlaying;
     });
   };
+
 
   const handleAttemptSelectWhilePlaying = () => {
     showNotification("Cannot select or modify assets while playing.", 2000);
@@ -304,13 +352,13 @@ function EditorPage() {
         <input type="text" value={projectName} onChange={handleProjectNameChange} className="project-name-input" aria-label="Project Name"/>
         <button className="back-button" onClick={handleBackToProjects}> Back to Projects </button>
       </header>
-      
+
       {notification && (
         <div className="editor-notification">
           {notification}
         </div>
       )}
-      
+
       <div className={`editor-layout ${isOptionsVisible ? 'options-expanded' : ''}`}>
         <div className="left-panel">
           {activePanel === 'assets' ? (
