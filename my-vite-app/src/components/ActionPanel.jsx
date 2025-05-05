@@ -178,6 +178,7 @@ function ActionPanel({ selectedAsset, onAddAction, onRemoveAction, onSwitchToAss
     onStart: [
       { id: 'fadeIn', name: 'Fade In', params: { duration: 1000 }, icon: <FadeIcon /> },
       { id: 'enableCollision', name: 'Enable Collision', params: {}, icon: <CollisionIcon /> },
+      { id: 'enableGravity', name: 'Enable Gravity', params: {}, icon: <CollisionIcon /> },
       { id: 'winCollision', name: 'Win Collision', params: {}, icon: <WinCollisionIcon /> }
     ],
     keyPress: [

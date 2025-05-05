@@ -29,56 +29,64 @@ class Action {
     // Handle all behaviors in switch statement
     switch (this.behavior) {
       case 'jump': {
-        // Set flag to prevent starting multiple jumps simultaneously
-        this.isRunning = true;
-        
-        const height = this.parameters.height || 50;
-        const duration = this.parameters.duration || 2000;
-        
-        const jumpOriginalY = asset.y;
-        const startTime = Date.now();
-        
-        // Create animation function
-        const animate = () => {
-          const currentTime = Date.now();
-          const elapsedTime = currentTime - startTime;
-          const progress = Math.min(elapsedTime / duration, 1);
-          const jumpOffset = Math.sin(Math.PI * progress) * height;
+        if (!asset.hasgravity) {
+            // Set flag to prevent starting multiple jumps simultaneously
+          this.isRunning = true;
           
-          // Store original Y position
-          const originalY = asset.y;
+          const height = this.parameters.height || 50;
+          const duration = this.parameters.duration || 2000;
           
-          // Calculate new position
-          const newY = jumpOriginalY - jumpOffset;
+          const jumpOriginalY = asset.y;
+          const startTime = Date.now();
           
-          // Only move if we're not colliding
-          if (!asset.hasCollision || !asset.isCollidingAbove) {
-            asset.y = newY;
-          } else {
-            // If collision happened in upward direction, reset jump
-            if (newY < originalY) {
+          // Create animation function
+          const animate = () => {
+            const currentTime = Date.now();
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / duration, 1);
+            const jumpOffset = Math.sin(Math.PI * progress) * height;
+            
+            // Store original Y position
+            const originalY = asset.y;
+            
+            // Calculate new position
+            const newY = jumpOriginalY - jumpOffset;
+            
+            // Only move if we're not colliding
+            if (!asset.hasCollision || !asset.isCollidingAbove) {
+              asset.y = newY;
+            } else {
+              // If collision happened in upward direction, reset jump
+              if (newY < originalY) {
+                this.isRunning = false;
+                this.animationFrameId = null;
+                return;
+              }
+            }
+            
+            asset.isAnimating = true;
+            
+            // Continue animation if not done
+            if (progress < 1) {
+              this.animationFrameId = requestAnimationFrame(animate);
+            } else {
+              // Reset position and flag when done
+              asset.y = jumpOriginalY;
               this.isRunning = false;
               this.animationFrameId = null;
-              return;
+              asset.isAnimating = false;
             }
-          }
+          };
           
-          asset.isAnimating = true;
-          
-          // Continue animation if not done
-          if (progress < 1) {
-            this.animationFrameId = requestAnimationFrame(animate);
-          } else {
-            // Reset position and flag when done
-            asset.y = jumpOriginalY;
-            this.isRunning = false;
-            this.animationFrameId = null;
-            asset.isAnimating = false;
-          }
-        };
-        
-        // Start the animation
-        this.animationFrameId = requestAnimationFrame(animate);
+          // Start the animation
+          this.animationFrameId = requestAnimationFrame(animate);
+          return true;
+        }
+
+        if (asset.hasgravity && asset.canJump) {
+          asset.velocityY = -2;
+          asset.canJump = false;
+        }
         return true;
       }
         
@@ -221,6 +229,12 @@ class Action {
         asset.hasCollision = true;
         asset.isWinObject = true;
         return true;
+
+        case 'enableGravity':
+          // Enable gravity for the asset
+          console.log(`Enabling gravity for ${asset.name}`);
+          asset.hasGravity = true;
+          return true;
                 
       default:
         console.warn(`Unknown behavior: ${this.behavior}`);

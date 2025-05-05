@@ -173,6 +173,14 @@ function Canvas({
           
           // Handle hard collision (prevent overlapping)
           resolveCollision(assetA, assetB);
+
+          // Reset velocities to prevent further movement
+          assetA.velocityX = 0;
+          assetA.velocityY = 0;
+          assetB.velocityX = 0;
+          assetB.velocityY = 0;
+          assetA.canJump = true; // Reset jump state if hitting another asset
+          assetB.canJump = true; // Reset jump state if hitting another asset
           positionsChanged = true;
         }
       }
@@ -192,6 +200,9 @@ function Canvas({
           
           if (oldX !== asset.x || oldY !== asset.y) {
             positionsChanged = true;
+            asset.velocityX = 0;
+            asset.velocityY = 0;
+            asset.canJump = true; // Reset jump state if hitting a wall
           }
         }
       });
@@ -243,26 +254,52 @@ function Canvas({
     
     if (overlapX < overlapY) {
       if (centerA.x < centerB.x) {
-        assetA.x -= overlapX / 2;
-        assetB.x += overlapX / 2;
+        if (assetA.hasGravity && !assetB.hasGravity) {
+          assetA.x -= overlapX;
+        } else if (!assetA.hasGravity && assetB.hasGravity) {
+          assetB.x += overlapX;
+        } else {
+          assetA.x -= overlapX / 2;
+          assetB.x += overlapX / 2;
+        }
         assetA.velocityX = 0; 
         assetB.velocityX = 0;
       } else {
-        assetA.x += overlapX / 2;
-        assetB.x -= overlapX / 2;
+        if (assetA.hasGravity && !assetB.hasGravity) {
+          assetA.x += overlapX;
+        } else if (!assetA.hasGravity && assetB.hasGravity) {
+          assetB.x -= overlapX;
+        } else {
+          assetA.x += overlapX / 2;
+          assetB.x -= overlapX / 2;
+        }
         assetA.velocityX = 0;
         assetB.velocityX = 0;
       }
     } else {
       // Resolve vertically - push both objects
       if (centerA.y < centerB.y) {
-        assetA.y -= overlapY / 2;
-        assetB.y += overlapY / 2;
+        console.log("Collision detected: ", assetA.name, assetB.name);
+        if (assetA.hasGravity && !assetB.hasGravity) {
+          assetA.y -= overlapY;
+        } else if (!assetA.hasGravity && assetB.hasGravity) {
+          assetB.y += overlapY;
+        } else {
+          assetA.y -= overlapY / 2;
+          assetB.y += overlapY / 2;
+        }
         assetA.velocityY = 0;
         assetB.velocityY = 0;
       } else {
-        assetA.y += overlapY / 2;
-        assetB.y -= overlapY / 2;
+        console.log("Collision detected: ", assetA.name, assetB.name);
+        if (assetA.hasGravity && !assetB.hasGravity) {
+          assetA.y += overlapY;
+        } else if (!assetA.hasGravity && assetB.hasGravity) {
+          assetB.y -= overlapY;
+        } else {
+          assetA.y += overlapY / 2;
+          assetB.y -= overlapY / 2;
+        }
         assetA.velocityY = 0;
         assetB.velocityY = 0;
       }
@@ -474,9 +511,13 @@ function Canvas({
         // Process all key actions in every frame
         processKeyActions();
         
+
         // Process assets with ongoing velocity
         let movementOccurred = false;
         assetsRef.current.forEach(asset => {
+          asset.velocityX += asset.accelerationX;
+          asset.velocityY += asset.accelerationY;
+
           if ((asset.velocityX || asset.velocityY) && !asset.isAnimating) {
             const oldX = asset.x;
             const oldY = asset.y;

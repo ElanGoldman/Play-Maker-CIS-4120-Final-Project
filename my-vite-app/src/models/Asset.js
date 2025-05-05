@@ -40,6 +40,11 @@ class Asset {
     this.isCollidingLeft = false;
     this.isCollidingRight = false;
     this.isCollidingWithCanvas = false;
+
+    //allow another jump
+    this.canJump = true;
+    this.hasGravity = options.hasGravity !== undefined ? options.hasGravity : false;
+    this.accelerationY += this.hasGravity ? 2 : 0; // Gravity effect
   }
 
   // Add a new action to this asset
