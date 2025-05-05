@@ -44,7 +44,7 @@ class Asset {
     //allow another jump
     this.canJump = true;
     this.hasGravity = options.hasGravity !== undefined ? options.hasGravity : false;
-    this.accelerationY += this.hasGravity ? 2 : 0; // Gravity effect
+    this.accelerationY += this.hasGravity ? 1 : 0; // Gravity effect
   }
 
   // Add a new action to this asset
@@ -293,7 +293,13 @@ class Asset {
       originalHeight: this.originalHeight,
       actions: this.actions,
       properties: this.properties,
-      hasCollision: this.hasCollision
+      hasCollision: this.hasCollision,
+      hasGravity: this.hasGravity,
+      canJump: this.canJump,
+      velocityX: this.velocityX,
+      velocityY: this.velocityY,
+      accelerationX: this.accelerationX,
+      accelerationY: this.accelerationY,
     };
   }
 

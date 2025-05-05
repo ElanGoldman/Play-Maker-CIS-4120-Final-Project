@@ -29,7 +29,7 @@ class Action {
     // Handle all behaviors in switch statement
     switch (this.behavior) {
       case 'jump': {
-        if (!asset.hasgravity) {
+        if (!asset.hasGravity) {
             // Set flag to prevent starting multiple jumps simultaneously
           this.isRunning = true;
           
@@ -82,11 +82,12 @@ class Action {
           this.animationFrameId = requestAnimationFrame(animate);
           return true;
         }
-
-        if (asset.hasgravity && asset.canJump) {
-          asset.velocityY = -2;
+        if (asset.hasGravity && asset.canJump) {
+          asset.velocityY = -10;
           asset.canJump = false;
-        }
+
+          console.log(asset.toJSON())
+        } 
         return true;
       }
         

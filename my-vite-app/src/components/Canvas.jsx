@@ -173,14 +173,6 @@ function Canvas({
           
           // Handle hard collision (prevent overlapping)
           resolveCollision(assetA, assetB);
-
-          // Reset velocities to prevent further movement
-          assetA.velocityX = 0;
-          assetA.velocityY = 0;
-          assetB.velocityX = 0;
-          assetB.velocityY = 0;
-          assetA.canJump = true; // Reset jump state if hitting another asset
-          assetB.canJump = true; // Reset jump state if hitting another asset
           positionsChanged = true;
         }
       }
@@ -200,9 +192,13 @@ function Canvas({
           
           if (oldX !== asset.x || oldY !== asset.y) {
             positionsChanged = true;
-            asset.velocityX = 0;
-            asset.velocityY = 0;
-            asset.canJump = true; // Reset jump state if hitting a wall
+          }
+
+          if (asset.y === canvas.height - asset.height) {
+            if (asset.velocityY > 0){
+              asset.velocityY = 0;
+            }
+            asset.canJump = true; // Reset jump state if on the ground
           }
         }
       });
@@ -279,9 +275,9 @@ function Canvas({
     } else {
       // Resolve vertically - push both objects
       if (centerA.y < centerB.y) {
-        console.log("Collision detected: ", assetA.name, assetB.name);
         if (assetA.hasGravity && !assetB.hasGravity) {
           assetA.y -= overlapY;
+          assetA.canJump = true; 
         } else if (!assetA.hasGravity && assetB.hasGravity) {
           assetB.y += overlapY;
         } else {
@@ -291,11 +287,11 @@ function Canvas({
         assetA.velocityY = 0;
         assetB.velocityY = 0;
       } else {
-        console.log("Collision detected: ", assetA.name, assetB.name);
         if (assetA.hasGravity && !assetB.hasGravity) {
           assetA.y += overlapY;
         } else if (!assetA.hasGravity && assetB.hasGravity) {
           assetB.y -= overlapY;
+          assetB.canJump = true;
         } else {
           assetA.y += overlapY / 2;
           assetB.y -= overlapY / 2;
@@ -362,13 +358,8 @@ function Canvas({
             
             handleWinNotification();
           }
-          
-          asset.x = originalX;
-          asset.y = originalY;
-          
-          // Stop velocity
-          asset.velocityX = 0;
-          asset.velocityY = 0;
+
+          resolveCollision(asset, otherAsset);
         }
       });
     }
